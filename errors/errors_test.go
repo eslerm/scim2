@@ -8,6 +8,7 @@ import (
 )
 
 func TestCheckError(t *testing.T) {
+	t.Parallel()
 	err := fmt.Errorf("error message")
 	scimErr := CheckScimError(err, http.MethodGet)
 	if scimErr.Detail != err.Error() {
@@ -19,6 +20,7 @@ func TestCheckError(t *testing.T) {
 }
 
 func TestCheckScimError(t *testing.T) {
+	t.Parallel()
 	for _, test := range []struct {
 		statusCode int
 		method     string
@@ -65,6 +67,7 @@ func TestCheckScimError(t *testing.T) {
 }
 
 func TestCheckScimErrorWrapped(t *testing.T) {
+	t.Parallel()
 	wrapped := fmt.Errorf("wrapped: %w", ScimErrorResourceNotFound("123"))
 	scimErr := CheckScimError(wrapped, http.MethodGet)
 	if scimErr.Status != http.StatusNotFound {
@@ -76,6 +79,7 @@ func TestCheckScimErrorWrapped(t *testing.T) {
 }
 
 func TestScimErrorMarshalling(t *testing.T) {
+	t.Parallel()
 	scimErr := ScimError{
 		ScimType: ScimTypeTooMany,
 		Detail:   "Just too many.",

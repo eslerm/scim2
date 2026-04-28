@@ -7,6 +7,7 @@ import (
 )
 
 func TestDefaultSchemas(t *testing.T) {
+	t.Parallel()
 	for _, test := range []struct {
 		file   string
 		schema Schema

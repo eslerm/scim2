@@ -18,6 +18,7 @@ import (
 )
 
 func TestInvalidRequests(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name           string
 		method         string
@@ -84,6 +85,7 @@ func TestInvalidRequests(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
 			req := httptest.NewRequest(test.method, test.target, http.NoBody)
 			rr := httptest.NewRecorder()
 			newTestServer(t).ServeHTTP(rr, req)
@@ -94,6 +96,7 @@ func TestInvalidRequests(t *testing.T) {
 }
 
 func TestServerExplicitStatusCodes(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name           string
 		method         string
@@ -161,6 +164,7 @@ func TestServerExplicitStatusCodes(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			req := httptest.NewRequest(tt.method, tt.target, tt.body)
 			rr := httptest.NewRecorder()
 			w := &statusRecordingResponseWriter{ResponseWriter: rr}
@@ -175,6 +179,7 @@ func TestServerExplicitStatusCodes(t *testing.T) {
 }
 
 func TestServerMeEndpoint(t *testing.T) {
+	t.Parallel()
 	req := httptest.NewRequest(http.MethodGet, "/Me", http.NoBody)
 	rr := httptest.NewRecorder()
 	newTestServer(t).ServeHTTP(rr, req)
@@ -183,6 +188,7 @@ func TestServerMeEndpoint(t *testing.T) {
 }
 
 func TestServerResourceDeleteHandler(t *testing.T) {
+	t.Parallel()
 	req := httptest.NewRequest(http.MethodDelete, "/Users/0001", http.NoBody)
 	rr := httptest.NewRecorder()
 	newTestServer(t).ServeHTTP(rr, req)
@@ -191,6 +197,7 @@ func TestServerResourceDeleteHandler(t *testing.T) {
 }
 
 func TestServerResourceDeleteHandlerNotFound(t *testing.T) {
+	t.Parallel()
 	req := httptest.NewRequest(http.MethodDelete, "/Users/9999", http.NoBody)
 	rr := httptest.NewRecorder()
 	newTestServer(t).ServeHTTP(rr, req)
@@ -207,6 +214,7 @@ func TestServerResourceDeleteHandlerNotFound(t *testing.T) {
 }
 
 func TestServerResourceGetHandler(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name                 string
 		target               string
@@ -237,6 +245,7 @@ func TestServerResourceGetHandler(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			req := httptest.NewRequest(http.MethodGet, tt.target, http.NoBody)
 			rr := httptest.NewRecorder()
 			newTestServer(t).ServeHTTP(rr, req)
@@ -266,6 +275,7 @@ func TestServerResourceGetHandler(t *testing.T) {
 }
 
 func TestServerResourceGetHandlerNotFound(t *testing.T) {
+	t.Parallel()
 	req := httptest.NewRequest(http.MethodGet, "/Users/9999", http.NoBody)
 	rr := httptest.NewRecorder()
 	newTestServer(t).ServeHTTP(rr, req)
@@ -282,6 +292,7 @@ func TestServerResourceGetHandlerNotFound(t *testing.T) {
 }
 
 func TestServerResourceGetHandlerWithBaseURL(t *testing.T) {
+	t.Parallel()
 	req := httptest.NewRequest(http.MethodGet, "/Users/0001", http.NoBody)
 	rr := httptest.NewRecorder()
 	newTestServerWithBaseURL(t).ServeHTTP(rr, req)
@@ -298,6 +309,7 @@ func TestServerResourceGetHandlerWithBaseURL(t *testing.T) {
 }
 
 func TestServerResourcePatchHandlerFailOnBadType(t *testing.T) {
+	t.Parallel()
 	req := httptest.NewRequest(http.MethodPatch, "/Users/0001", strings.NewReader(`{
 		"schemas": ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
 		"Operations":[
@@ -320,6 +332,7 @@ func TestServerResourcePatchHandlerFailOnBadType(t *testing.T) {
 }
 
 func TestServerResourcePatchHandlerInvalidPath(t *testing.T) {
+	t.Parallel()
 	req := httptest.NewRequest(http.MethodPatch, "/Users/0001", strings.NewReader(`{
 		"schemas": ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
 		"Operations":[
@@ -341,6 +354,7 @@ func TestServerResourcePatchHandlerInvalidPath(t *testing.T) {
 }
 
 func TestServerResourcePatchHandlerInvalidRemoveOp(t *testing.T) {
+	t.Parallel()
 	req := httptest.NewRequest(http.MethodPatch, "/Groups/0001", strings.NewReader(`{
 		"schemas": ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
 		"Operations":[
@@ -357,6 +371,7 @@ func TestServerResourcePatchHandlerInvalidRemoveOp(t *testing.T) {
 }
 
 func TestServerResourcePatchHandlerInvalidRemoveOpNoTarget(t *testing.T) {
+	t.Parallel()
 	req := httptest.NewRequest(http.MethodPatch, "/Groups/0001", strings.NewReader(`{
 		"schemas": ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
 		"Operations":[
@@ -376,6 +391,7 @@ func TestServerResourcePatchHandlerInvalidRemoveOpNoTarget(t *testing.T) {
 }
 
 func TestServerResourcePatchHandlerMapTypeSubAttribute(t *testing.T) {
+	t.Parallel()
 	recorder := httptest.NewRecorder()
 	newTestServer(t).ServeHTTP(recorder, httptest.NewRequest(http.MethodPatch, "/Users/0001", strings.NewReader(`{
 			"schemas": ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
@@ -404,6 +420,7 @@ func TestServerResourcePatchHandlerMapTypeSubAttribute(t *testing.T) {
 }
 
 func TestServerResourcePatchHandlerReturnsNoContent(t *testing.T) {
+	t.Parallel()
 	reqs := []*http.Request{
 		httptest.NewRequest(http.MethodPatch, "/Users/0001", strings.NewReader(`{
 			"schemas": ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
@@ -445,6 +462,7 @@ func TestServerResourcePatchHandlerReturnsNoContent(t *testing.T) {
 
 // Tests valid add, replace, and remove operations.
 func TestServerResourcePatchHandlerValid(t *testing.T) {
+	t.Parallel()
 	req := httptest.NewRequest(http.MethodPatch, "/Users/0001", strings.NewReader(`{
 		"schemas": ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
 		"Operations":[
@@ -510,6 +528,7 @@ func TestServerResourcePatchHandlerValid(t *testing.T) {
 }
 
 func TestServerResourcePatchHandlerValidPathHasSubAttributes(t *testing.T) {
+	t.Parallel()
 	req := httptest.NewRequest(http.MethodPatch, "/Users/0001", strings.NewReader(`{
 		"schemas": ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
 		"Operations":[
@@ -532,6 +551,7 @@ func TestServerResourcePatchHandlerValidPathHasSubAttributes(t *testing.T) {
 }
 
 func TestServerResourcePatchHandlerValidRemoveOp(t *testing.T) {
+	t.Parallel()
 	req := httptest.NewRequest(http.MethodPatch, "/Groups/0001", strings.NewReader(`{
 		"schemas": ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
 		"Operations":[
@@ -548,6 +568,7 @@ func TestServerResourcePatchHandlerValidRemoveOp(t *testing.T) {
 }
 
 func TestServerResourcePatchHandlerWithBaseURL(t *testing.T) {
+	t.Parallel()
 	req := httptest.NewRequest(http.MethodPatch, "/Users/0001", strings.NewReader(`{
 		"schemas": ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
 		"Operations":[
@@ -573,6 +594,7 @@ func TestServerResourcePatchHandlerWithBaseURL(t *testing.T) {
 }
 
 func TestServerResourcePostHandlerMissingSchemas(t *testing.T) {
+	t.Parallel()
 	req := httptest.NewRequest(http.MethodPost, "/Users", strings.NewReader(`{"userName": "test1"}`))
 	rr := httptest.NewRecorder()
 	newTestServer(t).ServeHTTP(rr, req)
@@ -581,6 +603,7 @@ func TestServerResourcePostHandlerMissingSchemas(t *testing.T) {
 }
 
 func TestServerResourcePostHandlerValid(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name               string
 		target             string
@@ -617,6 +640,7 @@ func TestServerResourcePostHandlerValid(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
 			req := httptest.NewRequest(http.MethodPost, test.target, strings.NewReader(test.body))
 			rr := httptest.NewRecorder()
 			newTestServer(t).ServeHTTP(rr, req)
@@ -649,6 +673,7 @@ func TestServerResourcePostHandlerValid(t *testing.T) {
 }
 
 func TestServerResourcePostHandlerWithBaseURL(t *testing.T) {
+	t.Parallel()
 	body := `{"userName": "test1", "schemas":["urn:ietf:params:scim:schemas:core:2.0:User"]}`
 	req := httptest.NewRequest(http.MethodPost, "/Users", strings.NewReader(body))
 	rr := httptest.NewRecorder()
@@ -670,6 +695,7 @@ func TestServerResourcePostHandlerWithBaseURL(t *testing.T) {
 }
 
 func TestServerResourcePostHandlerWithExtension(t *testing.T) {
+	t.Parallel()
 	body := `{
 		"schemas": ["urn:ietf:params:scim:schemas:core:2.0:User", "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User"],
 		"userName": "test1",
@@ -685,6 +711,7 @@ func TestServerResourcePostHandlerWithExtension(t *testing.T) {
 }
 
 func TestServerResourcePostHandlerWrongSchema(t *testing.T) {
+	t.Parallel()
 	body := `{"userName": "test1", "schemas": ["urn:ietf:params:scim:schemas:core:2.0:Group"]}`
 	req := httptest.NewRequest(http.MethodPost, "/Users", strings.NewReader(body))
 	rr := httptest.NewRecorder()
@@ -694,6 +721,7 @@ func TestServerResourcePostHandlerWrongSchema(t *testing.T) {
 }
 
 func TestServerResourcePutHandlerNotFound(t *testing.T) {
+	t.Parallel()
 	reqBody := `{"userName": "other","schemas":["urn:ietf:params:scim:schemas:core:2.0:User"]}`
 	req := httptest.NewRequest(http.MethodPut, "/Users/9999", strings.NewReader(reqBody))
 	rr := httptest.NewRecorder()
@@ -716,6 +744,7 @@ func TestServerResourcePutHandlerNotFound(t *testing.T) {
 }
 
 func TestServerResourcePutHandlerValid(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name               string
 		target             string
@@ -746,6 +775,7 @@ func TestServerResourcePutHandlerValid(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
 			req := httptest.NewRequest(http.MethodPut, test.target, strings.NewReader(test.body))
 			rr := httptest.NewRecorder()
 			newTestServer(t).ServeHTTP(rr, req)
@@ -768,6 +798,7 @@ func TestServerResourcePutHandlerValid(t *testing.T) {
 }
 
 func TestServerResourcePutHandlerWithBaseURL(t *testing.T) {
+	t.Parallel()
 	body := `{"userName": "test1", "schemas":["urn:ietf:params:scim:schemas:core:2.0:User"]}`
 	req := httptest.NewRequest(http.MethodPut, "/Users/0001", strings.NewReader(body))
 	rr := httptest.NewRecorder()
@@ -785,6 +816,7 @@ func TestServerResourcePutHandlerWithBaseURL(t *testing.T) {
 }
 
 func TestServerResourceSearch(t *testing.T) {
+	t.Parallel()
 	s := newTestServerWithSearchHandler(t)
 
 	count := 10
@@ -828,6 +860,7 @@ func TestServerResourceSearch(t *testing.T) {
 }
 
 func TestServerResourceSearchInvalidBody(t *testing.T) {
+	t.Parallel()
 	s := newTestServerWithSearchHandler(t)
 
 	body := strings.NewReader(`not json`)
@@ -839,6 +872,7 @@ func TestServerResourceSearchInvalidBody(t *testing.T) {
 }
 
 func TestServerResourceSearchInvalidFilter(t *testing.T) {
+	t.Parallel()
 	s := newTestServerWithSearchHandler(t)
 
 	req := httptest.NewRequest(http.MethodPost, "/Users/.search", marshalSearchRequest(t, searchRequest{
@@ -852,6 +886,7 @@ func TestServerResourceSearchInvalidFilter(t *testing.T) {
 }
 
 func TestServerResourceSearchInvalidSchemas(t *testing.T) {
+	t.Parallel()
 	s := newTestServerWithSearchHandler(t)
 
 	req := httptest.NewRequest(http.MethodPost, "/Users/.search", marshalSearchRequest(t, searchRequest{
@@ -864,6 +899,7 @@ func TestServerResourceSearchInvalidSchemas(t *testing.T) {
 }
 
 func TestServerResourceSearchInvalidSortOrder(t *testing.T) {
+	t.Parallel()
 	s := newTestServerWithSearchHandler(t)
 
 	req := httptest.NewRequest(http.MethodPost, "/Users/.search", marshalSearchRequest(t, searchRequest{
@@ -877,6 +913,7 @@ func TestServerResourceSearchInvalidSortOrder(t *testing.T) {
 }
 
 func TestServerResourceSearchMissingSchemas(t *testing.T) {
+	t.Parallel()
 	s := newTestServerWithSearchHandler(t)
 
 	req := httptest.NewRequest(http.MethodPost, "/Users/.search", marshalSearchRequest(t, searchRequest{}))
@@ -887,6 +924,7 @@ func TestServerResourceSearchMissingSchemas(t *testing.T) {
 }
 
 func TestServerResourceSearchNotImplemented(t *testing.T) {
+	t.Parallel()
 	body := strings.NewReader(`{}`)
 	req := httptest.NewRequest(http.MethodPost, "/Users/.search", body)
 	rr := httptest.NewRecorder()
@@ -896,6 +934,7 @@ func TestServerResourceSearchNotImplemented(t *testing.T) {
 }
 
 func TestServerResourceSearchPagination(t *testing.T) {
+	t.Parallel()
 	s := newTestServerWithSearchHandler(t)
 
 	startIndex := 2
@@ -917,6 +956,7 @@ func TestServerResourceSearchPagination(t *testing.T) {
 }
 
 func TestServerResourceSearchWithV2Prefix(t *testing.T) {
+	t.Parallel()
 	s := newTestServerWithSearchHandler(t)
 
 	req := httptest.NewRequest(http.MethodPost, "/v2/Users/.search", marshalSearchRequest(t, searchRequest{
@@ -929,10 +969,12 @@ func TestServerResourceSearchWithV2Prefix(t *testing.T) {
 }
 
 func TestServerResourceSearchWrongMethod(t *testing.T) {
+	t.Parallel()
 	s := newTestServerWithSearchHandler(t)
 
 	for _, method := range []string{http.MethodGet, http.MethodPut, http.MethodPatch, http.MethodDelete} {
 		t.Run(method, func(t *testing.T) {
+			t.Parallel()
 			req := httptest.NewRequest(method, "/Users/.search", http.NoBody)
 			rr := httptest.NewRecorder()
 			s.ServeHTTP(rr, req)
@@ -943,6 +985,7 @@ func TestServerResourceSearchWrongMethod(t *testing.T) {
 }
 
 func TestServerResourceTypeHandlerValid(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name          string
 		resourceType  string
@@ -967,6 +1010,7 @@ func TestServerResourceTypeHandlerValid(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("%s/ResourceTypes/%s", tt.versionPrefix, tt.resourceType), http.NoBody)
 			rr := httptest.NewRecorder()
 			newTestServer(t).ServeHTTP(rr, req)
@@ -982,6 +1026,7 @@ func TestServerResourceTypeHandlerValid(t *testing.T) {
 }
 
 func TestServerResourceTypesHandler(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name   string
 		target string
@@ -997,6 +1042,7 @@ func TestServerResourceTypesHandler(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
 			req := httptest.NewRequest(http.MethodGet, test.target, http.NoBody)
 			rr := httptest.NewRecorder()
 			newTestServer(t).ServeHTTP(rr, req)
@@ -1022,6 +1068,7 @@ func TestServerResourceTypesHandler(t *testing.T) {
 }
 
 func TestServerResourcesGetAllHandlerNegativeCount(t *testing.T) {
+	t.Parallel()
 	req := httptest.NewRequest(http.MethodGet, "/Users?count=-1", http.NoBody)
 	rr := httptest.NewRecorder()
 	newTestServer(t).ServeHTTP(rr, req)
@@ -1035,6 +1082,7 @@ func TestServerResourcesGetAllHandlerNegativeCount(t *testing.T) {
 }
 
 func TestServerResourcesGetAllHandlerNonIntCount(t *testing.T) {
+	t.Parallel()
 	req := httptest.NewRequest(http.MethodGet, "/Users?count=BadBanana", http.NoBody)
 	rr := httptest.NewRecorder()
 	newTestServer(t).ServeHTTP(rr, req)
@@ -1048,6 +1096,7 @@ func TestServerResourcesGetAllHandlerNonIntCount(t *testing.T) {
 }
 
 func TestServerResourcesGetAllHandlerNonIntStartIndex(t *testing.T) {
+	t.Parallel()
 	req := httptest.NewRequest(http.MethodGet, "/Users?startIndex=BadBanana", http.NoBody)
 	rr := httptest.NewRecorder()
 	newTestServer(t).ServeHTTP(rr, req)
@@ -1061,6 +1110,7 @@ func TestServerResourcesGetAllHandlerNonIntStartIndex(t *testing.T) {
 }
 
 func TestServerResourcesGetHandler(t *testing.T) {
+	t.Parallel()
 	req := httptest.NewRequest(http.MethodGet, "/Users", http.NoBody)
 	rr := httptest.NewRecorder()
 	newTestServer(t).ServeHTTP(rr, req)
@@ -1074,6 +1124,7 @@ func TestServerResourcesGetHandler(t *testing.T) {
 }
 
 func TestServerResourcesGetHandlerFilterOnCommonAttribute(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name   string
 		filter string
@@ -1085,6 +1136,7 @@ func TestServerResourcesGetHandlerFilterOnCommonAttribute(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			target := fmt.Sprintf("/Users?filter=%s", url.QueryEscape(tt.filter))
 			req := httptest.NewRequest(http.MethodGet, target, http.NoBody)
 			rr := httptest.NewRecorder()
@@ -1096,6 +1148,7 @@ func TestServerResourcesGetHandlerFilterOnCommonAttribute(t *testing.T) {
 }
 
 func TestServerResourcesGetHandlerMaxCount(t *testing.T) {
+	t.Parallel()
 	req := httptest.NewRequest(http.MethodGet, "/Users?count=20000", http.NoBody)
 	rr := httptest.NewRecorder()
 	newTestServer(t).ServeHTTP(rr, req)
@@ -1108,6 +1161,7 @@ func TestServerResourcesGetHandlerMaxCount(t *testing.T) {
 }
 
 func TestServerResourcesGetHandlerPagination(t *testing.T) {
+	t.Parallel()
 	req := httptest.NewRequest(http.MethodGet, "/Users?count=2&startIndex=2", http.NoBody)
 	rr := httptest.NewRecorder()
 	newTestServer(t).ServeHTTP(rr, req)
@@ -1120,6 +1174,7 @@ func TestServerResourcesGetHandlerPagination(t *testing.T) {
 }
 
 func TestServerResourcesGetHandlerWithBaseURL(t *testing.T) {
+	t.Parallel()
 	req := httptest.NewRequest(http.MethodGet, "/Users?count=2&startIndex=1", http.NoBody)
 	rr := httptest.NewRecorder()
 	newTestServerWithBaseURL(t).ServeHTTP(rr, req)
@@ -1143,6 +1198,7 @@ func TestServerResourcesGetHandlerWithBaseURL(t *testing.T) {
 }
 
 func TestServerRootQuery(t *testing.T) {
+	t.Parallel()
 	s := newTestServerWithRootQueryHandler(t)
 
 	req := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
@@ -1158,6 +1214,7 @@ func TestServerRootQuery(t *testing.T) {
 }
 
 func TestServerRootQueryExplicitStatusCode(t *testing.T) {
+	t.Parallel()
 	s := newTestServerWithRootQueryHandler(t)
 
 	req := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
@@ -1172,6 +1229,7 @@ func TestServerRootQueryExplicitStatusCode(t *testing.T) {
 }
 
 func TestServerRootQueryFilter(t *testing.T) {
+	t.Parallel()
 	s, err := NewServer(
 		&ServerArgs{
 			ServiceProviderConfig: &ServiceProviderConfig{},
@@ -1199,6 +1257,7 @@ func TestServerRootQueryFilter(t *testing.T) {
 }
 
 func TestServerRootQueryHandlerError(t *testing.T) {
+	t.Parallel()
 	s, err := NewServer(
 		&ServerArgs{
 			ServiceProviderConfig: &ServiceProviderConfig{},
@@ -1218,6 +1277,7 @@ func TestServerRootQueryHandlerError(t *testing.T) {
 }
 
 func TestServerRootQueryInjectsResourceFields(t *testing.T) {
+	t.Parallel()
 	s := newTestServerWithRootQueryHandler(t)
 
 	req := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
@@ -1247,6 +1307,7 @@ func TestServerRootQueryInjectsResourceFields(t *testing.T) {
 }
 
 func TestServerRootQueryInvalidCount(t *testing.T) {
+	t.Parallel()
 	s := newTestServerWithRootQueryHandler(t)
 
 	req := httptest.NewRequest(http.MethodGet, "/?count=BadBanana", http.NoBody)
@@ -1257,6 +1318,7 @@ func TestServerRootQueryInvalidCount(t *testing.T) {
 }
 
 func TestServerRootQueryMergesMetaFields(t *testing.T) {
+	t.Parallel()
 	created := time.Date(2024, 1, 15, 10, 30, 0, 0, time.UTC)
 	modified := time.Date(2024, 6, 20, 14, 0, 0, 0, time.UTC)
 
@@ -1296,10 +1358,12 @@ func TestServerRootQueryMergesMetaFields(t *testing.T) {
 }
 
 func TestServerRootQueryNonGetMethod(t *testing.T) {
+	t.Parallel()
 	s := newTestServerWithRootQueryHandler(t)
 
 	for _, method := range []string{http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete} {
 		t.Run(method, func(t *testing.T) {
+			t.Parallel()
 			req := httptest.NewRequest(method, "/", http.NoBody)
 			rr := httptest.NewRecorder()
 			s.ServeHTTP(rr, req)
@@ -1310,6 +1374,7 @@ func TestServerRootQueryNonGetMethod(t *testing.T) {
 }
 
 func TestServerRootQueryNotConfigured(t *testing.T) {
+	t.Parallel()
 	req := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
 	rr := httptest.NewRecorder()
 	newTestServer(t).ServeHTTP(rr, req)
@@ -1322,6 +1387,7 @@ func TestServerRootQueryNotConfigured(t *testing.T) {
 }
 
 func TestServerRootQueryNotConfiguredWithV2Prefix(t *testing.T) {
+	t.Parallel()
 	req := httptest.NewRequest(http.MethodGet, "/v2", http.NoBody)
 	rr := httptest.NewRecorder()
 	newTestServer(t).ServeHTTP(rr, req)
@@ -1334,6 +1400,7 @@ func TestServerRootQueryNotConfiguredWithV2Prefix(t *testing.T) {
 }
 
 func TestServerRootQueryNotConfiguredWithV2PrefixTrailingSlash(t *testing.T) {
+	t.Parallel()
 	req := httptest.NewRequest(http.MethodGet, "/v2/", http.NoBody)
 	rr := httptest.NewRecorder()
 	newTestServer(t).ServeHTTP(rr, req)
@@ -1346,6 +1413,7 @@ func TestServerRootQueryNotConfiguredWithV2PrefixTrailingSlash(t *testing.T) {
 }
 
 func TestServerRootQueryPagination(t *testing.T) {
+	t.Parallel()
 	s := newTestServerWithRootQueryHandler(t)
 
 	req := httptest.NewRequest(http.MethodGet, "/?count=1&startIndex=2", http.NoBody)
@@ -1363,6 +1431,7 @@ func TestServerRootQueryPagination(t *testing.T) {
 }
 
 func TestServerRootQueryWithV2Prefix(t *testing.T) {
+	t.Parallel()
 	s := newTestServerWithRootQueryHandler(t)
 
 	req := httptest.NewRequest(http.MethodGet, "/v2", http.NoBody)
@@ -1377,6 +1446,7 @@ func TestServerRootQueryWithV2Prefix(t *testing.T) {
 }
 
 func TestServerRootQueryWithV2PrefixTrailingSlash(t *testing.T) {
+	t.Parallel()
 	s := newTestServerWithRootQueryHandler(t)
 
 	req := httptest.NewRequest(http.MethodGet, "/v2/", http.NoBody)
@@ -1391,6 +1461,7 @@ func TestServerRootQueryWithV2PrefixTrailingSlash(t *testing.T) {
 }
 
 func TestServerRootSearch(t *testing.T) {
+	t.Parallel()
 	s := newTestServerWithRootQueryHandler(t)
 
 	req := httptest.NewRequest(http.MethodPost, "/.search", marshalSearchRequest(t, searchRequest{
@@ -1408,6 +1479,7 @@ func TestServerRootSearch(t *testing.T) {
 }
 
 func TestServerRootSearchCountExceedsMax(t *testing.T) {
+	t.Parallel()
 	s := newTestServerWithRootQueryHandler(t)
 
 	count := 999999
@@ -1427,6 +1499,7 @@ func TestServerRootSearchCountExceedsMax(t *testing.T) {
 }
 
 func TestServerRootSearchDefaultParams(t *testing.T) {
+	t.Parallel()
 	s := newTestServerWithRootQueryHandler(t)
 
 	req := httptest.NewRequest(http.MethodPost, "/.search", marshalSearchRequest(t, searchRequest{
@@ -1445,6 +1518,7 @@ func TestServerRootSearchDefaultParams(t *testing.T) {
 }
 
 func TestServerRootSearchExplicitStatusCode(t *testing.T) {
+	t.Parallel()
 	s := newTestServerWithRootQueryHandler(t)
 
 	req := httptest.NewRequest(http.MethodPost, "/.search", marshalSearchRequest(t, searchRequest{
@@ -1461,6 +1535,7 @@ func TestServerRootSearchExplicitStatusCode(t *testing.T) {
 }
 
 func TestServerRootSearchFilter(t *testing.T) {
+	t.Parallel()
 	s, err := NewServer(
 		&ServerArgs{
 			ServiceProviderConfig: &ServiceProviderConfig{},
@@ -1490,6 +1565,7 @@ func TestServerRootSearchFilter(t *testing.T) {
 }
 
 func TestServerRootSearchHandlerError(t *testing.T) {
+	t.Parallel()
 	s, err := NewServer(
 		&ServerArgs{
 			ServiceProviderConfig: &ServiceProviderConfig{},
@@ -1511,6 +1587,7 @@ func TestServerRootSearchHandlerError(t *testing.T) {
 }
 
 func TestServerRootSearchInvalidBody(t *testing.T) {
+	t.Parallel()
 	s := newTestServerWithRootQueryHandler(t)
 
 	body := strings.NewReader(`not json`)
@@ -1522,6 +1599,7 @@ func TestServerRootSearchInvalidBody(t *testing.T) {
 }
 
 func TestServerRootSearchNegativeCount(t *testing.T) {
+	t.Parallel()
 	s := newTestServerWithRootQueryHandler(t)
 
 	count := -5
@@ -1542,6 +1620,7 @@ func TestServerRootSearchNegativeCount(t *testing.T) {
 }
 
 func TestServerRootSearchNotConfigured(t *testing.T) {
+	t.Parallel()
 	req := httptest.NewRequest(http.MethodPost, "/.search", strings.NewReader(`{}`))
 	rr := httptest.NewRecorder()
 	newTestServer(t).ServeHTTP(rr, req)
@@ -1554,6 +1633,7 @@ func TestServerRootSearchNotConfigured(t *testing.T) {
 }
 
 func TestServerRootSearchPagination(t *testing.T) {
+	t.Parallel()
 	s := newTestServerWithRootQueryHandler(t)
 
 	startIndex := 2
@@ -1577,6 +1657,7 @@ func TestServerRootSearchPagination(t *testing.T) {
 }
 
 func TestServerRootSearchWithV2Prefix(t *testing.T) {
+	t.Parallel()
 	s := newTestServerWithRootQueryHandler(t)
 
 	req := httptest.NewRequest(http.MethodPost, "/v2/.search", marshalSearchRequest(t, searchRequest{
@@ -1593,10 +1674,12 @@ func TestServerRootSearchWithV2Prefix(t *testing.T) {
 }
 
 func TestServerRootSearchWrongMethod(t *testing.T) {
+	t.Parallel()
 	s := newTestServerWithRootQueryHandler(t)
 
 	for _, method := range []string{http.MethodGet, http.MethodPut, http.MethodPatch, http.MethodDelete} {
 		t.Run(method, func(t *testing.T) {
+			t.Parallel()
 			req := httptest.NewRequest(method, "/.search", http.NoBody)
 			rr := httptest.NewRecorder()
 			s.ServeHTTP(rr, req)
@@ -1607,6 +1690,7 @@ func TestServerRootSearchWrongMethod(t *testing.T) {
 }
 
 func TestServerSchemaEndpointValid(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name          string
 		schema        string
@@ -1631,6 +1715,7 @@ func TestServerSchemaEndpointValid(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
 			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf(
 				"%s/Schemas/%s", test.versionPrefix, test.schema,
 			), http.NoBody)
@@ -1647,6 +1732,7 @@ func TestServerSchemaEndpointValid(t *testing.T) {
 }
 
 func TestServerSchemasEndpoint(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name   string
 		target string
@@ -1662,6 +1748,7 @@ func TestServerSchemasEndpoint(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
 			req := httptest.NewRequest(http.MethodGet, test.target, http.NoBody)
 			rr := httptest.NewRecorder()
 			newTestServer(t).ServeHTTP(rr, req)
@@ -1695,6 +1782,7 @@ func TestServerSchemasEndpoint(t *testing.T) {
 }
 
 func TestServerSchemasEndpointFilter(t *testing.T) {
+	t.Parallel()
 	params := url.Values{
 		"filter": []string{"id co \"extension\""},
 	}
@@ -1714,6 +1802,7 @@ func TestServerSchemasEndpointFilter(t *testing.T) {
 }
 
 func TestServerServiceProviderConfigHandler(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name   string
 		target string
@@ -1729,6 +1818,7 @@ func TestServerServiceProviderConfigHandler(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			req := httptest.NewRequest(http.MethodGet, tt.target, http.NoBody)
 			rr := httptest.NewRecorder()
 			newTestServer(t).ServeHTTP(rr, req)

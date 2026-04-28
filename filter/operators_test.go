@@ -9,6 +9,7 @@ import (
 
 // TestValidatorInvalidResourceTypes contains all the cases where an *errors.ScimError gets returned.
 func TestValidatorInvalidResourceTypes(t *testing.T) {
+	t.Parallel()
 	for _, test := range []struct {
 		name     string
 		filter   string
@@ -94,6 +95,7 @@ func TestValidatorInvalidResourceTypes(t *testing.T) {
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
 			validator, err := internal.NewValidator(test.filter, schema.Schema{
 				Attributes: []schema.CoreAttribute{test.attr},
 			})

@@ -7,6 +7,7 @@ import (
 )
 
 func TestOperationValidator_ValidateUpdate(t *testing.T) {
+	t.Parallel()
 	// The goal this test is to cover Section 3.5.2.1/3 of RFC7644.
 	// More info: https://tools.ietf.org/html/rfc7644#section-3.5.2.1
 	// More info: https://tools.ietf.org/html/rfc7644#section-3.5.2.3
@@ -106,6 +107,7 @@ func TestOperationValidator_ValidateUpdate(t *testing.T) {
 		{invalid: map[string]any{"op": "add", "value": map[string]any{"multiValued": []any{1}}}},
 	} {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+			t.Parallel()
 			// valid
 			if op := test.valid; op != nil {
 				operation, _ := json.Marshal(op)
@@ -133,6 +135,7 @@ func TestOperationValidator_ValidateUpdate(t *testing.T) {
 }
 
 func TestValidateUpdate_SingularValueNotWrapped(t *testing.T) {
+	t.Parallel()
 	// RFC 7644 Section 3.5.2.3 (page 43): "If the target location is a
 	// multi-valued attribute and a value selection ("valuePath") filter is
 	// specified that matches one or more values of the multi-valued attribute,

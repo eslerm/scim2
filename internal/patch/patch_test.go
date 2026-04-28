@@ -9,7 +9,8 @@ import (
 	"github.com/elimity-com/scim/schema"
 )
 
-func TestNewPathValidator(t *testing.T) {
+func TestNewPathValidator(t *testing.T) { //nolint:tparallel // subtests mutate schema.SetAllowStringValues global state
+	t.Parallel()
 	t.Run("Valid Integer", func(t *testing.T) {
 		for _, op := range []map[string]any{
 			{"op": "add", "path": "attr2", "value": 1234},
@@ -120,6 +121,7 @@ func TestNewPathValidator(t *testing.T) {
 }
 
 func TestOperationValidator_getRefAttribute(t *testing.T) {
+	t.Parallel()
 	for _, test := range []struct {
 		pathFilter       string
 		expectedAttrName string
@@ -168,6 +170,7 @@ func TestOperationValidator_getRefAttribute(t *testing.T) {
 }
 
 func TestOperationValidator_getRefSubAttribute(t *testing.T) {
+	t.Parallel()
 	for _, test := range []struct {
 		attributeName    string
 		subAttributeName string

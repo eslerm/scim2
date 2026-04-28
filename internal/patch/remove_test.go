@@ -107,6 +107,7 @@ func Example_replaceAllMembers() {
 }
 
 func TestOperationValidator_ValidateRemove(t *testing.T) {
+	t.Parallel()
 	// The goal this test is to cover Section 3.5.2.2 of RFC7644.
 	// More info: https://tools.ietf.org/html/rfc7644#section-3.5.2.2
 
@@ -138,6 +139,7 @@ func TestOperationValidator_ValidateRemove(t *testing.T) {
 		{valid: map[string]any{"op": "remove", "path": `complexMultiValued[attr1 eq "value"].attr1`}},
 	} {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+			t.Parallel()
 			// valid
 			if op := test.valid; op != nil {
 				operation, _ := json.Marshal(op)

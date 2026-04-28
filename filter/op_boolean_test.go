@@ -11,6 +11,7 @@ import (
 )
 
 func TestValidatorBoolean(t *testing.T) {
+	t.Parallel()
 	var (
 		exp = func(op filter.CompareOperator) string {
 			return fmt.Sprintf("bool %s true", op)
@@ -42,6 +43,7 @@ func TestValidatorBoolean(t *testing.T) {
 		{filter.LE, false},
 	} {
 		t.Run(string(test.op), func(t *testing.T) {
+			t.Parallel()
 			f := exp(test.op)
 			validator, err := internal.NewValidator(f, ref)
 			if err != nil {

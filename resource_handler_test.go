@@ -22,6 +22,7 @@ func ExampleResourceHandler() {
 }
 
 func TestValidateFilterForResourceTypes(t *testing.T) {
+	t.Parallel()
 	userSchema := getUserSchema()
 	groupSchema := schema.CoreGroupSchema()
 
@@ -39,33 +40,39 @@ func TestValidateFilterForResourceTypes(t *testing.T) {
 	}
 
 	t.Run("filter matching only User", func(t *testing.T) {
+		t.Parallel()
 		results := ValidateFilterForResourceTypes(`userName eq "john"`, resourceTypes)
 		assertLen(t, results, 1)
 		assertEqual(t, "User", results[0].ResourceType.Name)
 	})
 
 	t.Run("filter matching only Group", func(t *testing.T) {
+		t.Parallel()
 		results := ValidateFilterForResourceTypes(`members.value eq "123"`, resourceTypes)
 		assertLen(t, results, 1)
 		assertEqual(t, "Group", results[0].ResourceType.Name)
 	})
 
 	t.Run("filter matching both", func(t *testing.T) {
+		t.Parallel()
 		results := ValidateFilterForResourceTypes(`displayName eq "test"`, resourceTypes)
 		assertLen(t, results, 2)
 	})
 
 	t.Run("meta.resourceType filter matches all", func(t *testing.T) {
+		t.Parallel()
 		results := ValidateFilterForResourceTypes(`meta.resourceType eq "User"`, resourceTypes)
 		assertLen(t, results, 2)
 	})
 
 	t.Run("unparseable filter", func(t *testing.T) {
+		t.Parallel()
 		results := ValidateFilterForResourceTypes(`not a valid ((( filter`, resourceTypes)
 		assertLen(t, results, 0)
 	})
 
 	t.Run("does not mutate original schema attributes", func(t *testing.T) {
+		t.Parallel()
 		// Create a schema with spare capacity so append can mutate the backing array.
 		commonAttrs := schema.CommonAttributes()
 		attrs := make([]schema.CoreAttribute, 1, 1+len(commonAttrs))

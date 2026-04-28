@@ -16,9 +16,11 @@ import (
 var testdata embed.FS
 
 func TestIdP(t *testing.T) {
+	t.Parallel()
 	idps, _ := testdata.ReadDir("testdata")
 	for _, idp := range idps {
 		t.Run(idp.Name(), func(t *testing.T) {
+			t.Parallel()
 			idpPath := fmt.Sprintf("testdata/%s", idp.Name())
 			de, _ := fs.ReadDir(testdata, idpPath)
 			for _, f := range de {

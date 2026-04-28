@@ -8,8 +8,10 @@ import (
 )
 
 func TestPathValidator_Validate(t *testing.T) {
+	t.Parallel()
 	// More info: https://tools.ietf.org/html/rfc7644#section-3.5.2
 	t.Run("Valid", func(t *testing.T) {
+		t.Parallel()
 		for _, f := range []string{
 			`urn:ietf:params:scim:schemas:core:2.0:User:name`,
 			`urn:ietf:params:scim:schemas:core:2.0:User:name.familyName`,
@@ -37,6 +39,7 @@ func TestPathValidator_Validate(t *testing.T) {
 	})
 
 	t.Run("Invalid", func(t *testing.T) {
+		t.Parallel()
 		for _, f := range []string{
 			`urn:ietf:params:scim:schemas:core:2.0:Invalid:name`,
 
@@ -60,7 +63,9 @@ func TestPathValidator_Validate(t *testing.T) {
 }
 
 func TestValidator_PassesFilter(t *testing.T) {
+	t.Parallel()
 	t.Run("simple", func(t *testing.T) {
+		t.Parallel()
 		for _, test := range []struct {
 			filter  string
 			valid   map[string]any
@@ -135,6 +140,7 @@ func TestValidator_PassesFilter(t *testing.T) {
 		{name: "schemas", amount: 2, filter: `schemas eq "urn:ietf:params:scim:schemas:core:2.0:User"`},
 	} {
 		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
 			userSchema := schema.CoreUserSchema()
 			userSchema.Attributes = append(userSchema.Attributes, schema.SchemasAttributes())
 			userSchema.Attributes = append(userSchema.Attributes, schema.CommonAttributes()...)
@@ -156,6 +162,7 @@ func TestValidator_PassesFilter(t *testing.T) {
 	}
 
 	t.Run("extensions", func(t *testing.T) {
+		t.Parallel()
 		for _, test := range []struct {
 			amount int
 			filter string
@@ -187,6 +194,7 @@ func TestValidator_PassesFilter(t *testing.T) {
 }
 
 func TestValidator_Validate(t *testing.T) {
+	t.Parallel()
 	// More info: https://tools.ietf.org/html/rfc7644#section-3.4.2.2
 	userSchema := schema.CoreUserSchema()
 	userSchema.Attributes = append(userSchema.Attributes, schema.CommonAttributes()...)
@@ -225,6 +233,7 @@ func TestValidator_Validate(t *testing.T) {
 }
 
 func TestValidator_Validate_orderingOperatorOnBinaryAttribute(t *testing.T) {
+	t.Parallel()
 	ref := schema.Schema{
 		Attributes: []schema.CoreAttribute{
 			schema.SimpleCoreAttribute(schema.SimpleBinaryParams(schema.BinaryParams{
@@ -245,6 +254,7 @@ func TestValidator_Validate_orderingOperatorOnBinaryAttribute(t *testing.T) {
 }
 
 func TestValidator_Validate_orderingOperatorOnBooleanAttribute(t *testing.T) {
+	t.Parallel()
 	userSchema := schema.CoreUserSchema()
 	for _, op := range []string{"gt", "lt", "ge", "le"} {
 		f := "active " + op + " true"

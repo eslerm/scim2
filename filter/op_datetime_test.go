@@ -11,6 +11,7 @@ import (
 )
 
 func TestValidatorDateTime(t *testing.T) {
+	t.Parallel()
 	var (
 		exp = func(op filter.CompareOperator) string {
 			return fmt.Sprintf("time %s \"2021-01-01T12:00:00Z\"", op)
@@ -44,6 +45,7 @@ func TestValidatorDateTime(t *testing.T) {
 		{filter.LE, [3]bool{true, true, false}},
 	} {
 		t.Run(string(test.op), func(t *testing.T) {
+			t.Parallel()
 			f := exp(test.op)
 			validator, err := internal.NewValidator(f, ref)
 			if err != nil {

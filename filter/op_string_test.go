@@ -11,6 +11,7 @@ import (
 )
 
 func TestValidatorString(t *testing.T) {
+	t.Parallel()
 	var (
 		exp = func(op filter.CompareOperator) string {
 			return fmt.Sprintf("str %s \"x\"", op)
@@ -38,6 +39,7 @@ func TestValidatorString(t *testing.T) {
 		{filter.LE, [3]bool{true, true, false}, [3]bool{true, true, false}},
 	} {
 		t.Run(string(test.op), func(t *testing.T) {
+			t.Parallel()
 			f := exp(test.op)
 			for i, attr := range attrs {
 				validator, err := internal.NewValidator(f, schema.Schema{

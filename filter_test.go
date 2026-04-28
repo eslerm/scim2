@@ -14,6 +14,7 @@ import (
 )
 
 func Test_Group_Filter(t *testing.T) {
+	t.Parallel()
 	s := newTestServerForFilter(t)
 
 	tests := []struct {
@@ -26,6 +27,7 @@ func Test_Group_Filter(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			r := httptest.NewRequest(http.MethodGet, "/Groups?filter="+url.QueryEscape(tt.filter), http.NoBody)
 			w := httptest.NewRecorder()
 			s.ServeHTTP(w, r)
@@ -71,6 +73,7 @@ func Test_Group_Filter(t *testing.T) {
 }
 
 func Test_User_Filter(t *testing.T) {
+	t.Parallel()
 	s := newTestServerForFilter(t)
 
 	tests := []struct {
@@ -83,6 +86,7 @@ func Test_User_Filter(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			r := httptest.NewRequest(http.MethodGet, "/Users?filter="+url.QueryEscape(tt.filter), http.NoBody)
 			w := httptest.NewRecorder()
 			s.ServeHTTP(w, r)

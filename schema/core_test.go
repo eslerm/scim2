@@ -22,6 +22,7 @@ func ExampleCoreAttribute_WithRequired() {
 }
 
 func TestCoreAttribute_WithDescription(t *testing.T) {
+	t.Parallel()
 	attr := SimpleCoreAttribute(SimpleStringParams(StringParams{
 		Name: "test",
 	}))
@@ -36,6 +37,7 @@ func TestCoreAttribute_WithDescription(t *testing.T) {
 }
 
 func TestCoreAttribute_WithMutability(t *testing.T) {
+	t.Parallel()
 	attr := SimpleCoreAttribute(SimpleStringParams(StringParams{
 		Name: "test",
 	}))
@@ -49,6 +51,7 @@ func TestCoreAttribute_WithMutability(t *testing.T) {
 }
 
 func TestCoreAttribute_WithRequired(t *testing.T) {
+	t.Parallel()
 	attr := SimpleCoreAttribute(SimpleStringParams(StringParams{
 		Name: "test",
 	}))
@@ -62,6 +65,7 @@ func TestCoreAttribute_WithRequired(t *testing.T) {
 }
 
 func TestCoreAttribute_WithReturned(t *testing.T) {
+	t.Parallel()
 	attr := SimpleCoreAttribute(SimpleStringParams(StringParams{
 		Name: "test",
 	}))

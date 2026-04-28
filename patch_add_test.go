@@ -10,6 +10,7 @@ import (
 )
 
 func TestPatch_addAttributes(t *testing.T) {
+	t.Parallel()
 	raw, err := os.ReadFile("testdata/patch/add/attributes.json")
 	if err != nil {
 		t.Fatal(err)
@@ -57,6 +58,7 @@ func TestPatch_addAttributes(t *testing.T) {
 }
 
 func TestPatch_addMember(t *testing.T) {
+	t.Parallel()
 	raw, err := os.ReadFile("testdata/patch/add/member.json")
 	if err != nil {
 		t.Fatal(err)
@@ -100,6 +102,7 @@ func TestPatch_addMember(t *testing.T) {
 }
 
 func TestPatch_alreadyExists(t *testing.T) {
+	t.Parallel()
 	for _, test := range []struct {
 		jsonFilePath string
 		targetPath   string
@@ -150,6 +153,7 @@ func TestPatch_alreadyExists(t *testing.T) {
 }
 
 func TestPatch_complex(t *testing.T) {
+	t.Parallel()
 	raw, err := os.ReadFile("testdata/patch/add/complex.json")
 	if err != nil {
 		t.Fatal(err)

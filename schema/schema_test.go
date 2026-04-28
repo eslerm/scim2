@@ -64,6 +64,7 @@ var testSchema = Schema{
 }
 
 func TestInvalidAttributeName(t *testing.T) {
+	t.Parallel()
 	defer func() {
 		if r := recover(); r == nil {
 			t.Error("did not panic")
@@ -81,6 +82,7 @@ func TestInvalidAttributeName(t *testing.T) {
 }
 
 func TestJSONMarshalling(t *testing.T) {
+	t.Parallel()
 	expectedJSON, err := os.ReadFile("./testdata/schema_test.json")
 	if err != nil {
 		t.Fatal("failed to acquire test data")
@@ -104,7 +106,9 @@ func TestJSONMarshalling(t *testing.T) {
 }
 
 func TestJSONUnmarshalling(t *testing.T) {
+	t.Parallel()
 	t.Run("round trip", func(t *testing.T) {
+		t.Parallel()
 		originalJSON, err := testSchema.MarshalJSON()
 		if err != nil {
 			t.Fatal(err)
@@ -135,6 +139,7 @@ func TestJSONUnmarshalling(t *testing.T) {
 	})
 
 	t.Run("user schema round trip", func(t *testing.T) {
+		t.Parallel()
 		originalJSON, err := CoreUserSchema().MarshalJSON()
 		if err != nil {
 			t.Fatal(err)
@@ -165,6 +170,7 @@ func TestJSONUnmarshalling(t *testing.T) {
 	})
 
 	t.Run("group schema round trip", func(t *testing.T) {
+		t.Parallel()
 		originalJSON, err := CoreGroupSchema().MarshalJSON()
 		if err != nil {
 			t.Fatal(err)
@@ -195,6 +201,7 @@ func TestJSONUnmarshalling(t *testing.T) {
 	})
 
 	t.Run("from file", func(t *testing.T) {
+		t.Parallel()
 		data, err := os.ReadFile("./testdata/schema_test.json")
 		if err != nil {
 			t.Fatal(err)
@@ -217,6 +224,7 @@ func TestJSONUnmarshalling(t *testing.T) {
 	})
 
 	t.Run("enterprise user extension round trip", func(t *testing.T) {
+		t.Parallel()
 		originalJSON, err := ExtensionEnterpriseUser().MarshalJSON()
 		if err != nil {
 			t.Fatal(err)
@@ -247,6 +255,7 @@ func TestJSONUnmarshalling(t *testing.T) {
 	})
 
 	t.Run("custom schema round trip", func(t *testing.T) {
+		t.Parallel()
 		custom := Schema{
 			ID:          "urn:example:custom:1.0:Device",
 			Name:        optional.NewString("Device"),
@@ -333,6 +342,7 @@ func TestJSONUnmarshalling(t *testing.T) {
 	})
 
 	t.Run("unknown type", func(t *testing.T) {
+		t.Parallel()
 		data := []byte(`{"id":"x","attributes":[{"name":"a","type":"unknown"}]}`)
 		var got Schema
 		if err := json.Unmarshal(data, &got); err == nil {
@@ -341,6 +351,7 @@ func TestJSONUnmarshalling(t *testing.T) {
 	})
 
 	t.Run("unknown mutability", func(t *testing.T) {
+		t.Parallel()
 		data := []byte(`{"id":"x","attributes":[{"name":"a","type":"string","mutability":"unknown"}]}`)
 		var got Schema
 		if err := json.Unmarshal(data, &got); err == nil {
@@ -349,6 +360,7 @@ func TestJSONUnmarshalling(t *testing.T) {
 	})
 
 	t.Run("unknown returned", func(t *testing.T) {
+		t.Parallel()
 		data := []byte(`{"id":"x","attributes":[{"name":"a","type":"string","returned":"unknown"}]}`)
 		var got Schema
 		if err := json.Unmarshal(data, &got); err == nil {
@@ -357,6 +369,7 @@ func TestJSONUnmarshalling(t *testing.T) {
 	})
 
 	t.Run("unknown uniqueness", func(t *testing.T) {
+		t.Parallel()
 		data := []byte(`{"id":"x","attributes":[{"name":"a","type":"string","uniqueness":"unknown"}]}`)
 		var got Schema
 		if err := json.Unmarshal(data, &got); err == nil {
@@ -365,6 +378,7 @@ func TestJSONUnmarshalling(t *testing.T) {
 	})
 
 	t.Run("invalid attribute name", func(t *testing.T) {
+		t.Parallel()
 		data := []byte(`{"id":"x","attributes":[{"name":"_invalid","type":"string"}]}`)
 		var got Schema
 		if err := json.Unmarshal(data, &got); err == nil {
@@ -373,6 +387,7 @@ func TestJSONUnmarshalling(t *testing.T) {
 	})
 
 	t.Run("invalid sub-attribute name", func(t *testing.T) {
+		t.Parallel()
 		data := []byte(`{"id":"x","attributes":[{"name":"a","type":"complex","subAttributes":[{"name":"1bad","type":"string"}]}]}`)
 		var got Schema
 		if err := json.Unmarshal(data, &got); err == nil {
@@ -381,6 +396,7 @@ func TestJSONUnmarshalling(t *testing.T) {
 	})
 
 	t.Run("duplicate sub-attribute names", func(t *testing.T) {
+		t.Parallel()
 		data := []byte(`{"id":"x","attributes":[{"name":"a","type":"complex","subAttributes":[{"name":"b","type":"string"},{"name":"b","type":"string"}]}]}`)
 		var got Schema
 		if err := json.Unmarshal(data, &got); err == nil {
@@ -390,6 +406,7 @@ func TestJSONUnmarshalling(t *testing.T) {
 }
 
 func TestResourceInvalid(t *testing.T) {
+	t.Parallel()
 	var resource any
 	if _, scimErr := testSchema.Validate(resource); scimErr == nil {
 		t.Error("invalid resource expected")
@@ -397,6 +414,7 @@ func TestResourceInvalid(t *testing.T) {
 }
 
 func TestValidValidation(t *testing.T) {
+	t.Parallel()
 	for _, test := range []map[string]any{
 		{
 			"schemas":          []any{"test-schema-id"},
@@ -437,6 +455,7 @@ func TestValidValidation(t *testing.T) {
 }
 
 func TestValidationInvalid(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name     string
 		resource map[string]any
@@ -609,6 +628,7 @@ func TestValidationInvalid(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			if _, scimErr := testSchema.Validate(tt.resource); scimErr == nil {
 				t.Errorf("invalid resource expected")
 			}
