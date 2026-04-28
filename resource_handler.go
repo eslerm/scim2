@@ -1,6 +1,7 @@
 package scim
 
 import (
+	"maps"
 	"net/http"
 	"time"
 
@@ -54,10 +55,9 @@ type Resource struct {
 // from the response — handlers are solely responsible for omitting them. The framework should filter
 // r.Attributes against the schema's returned policy before marshaling.
 func (r Resource) response(resourceType ResourceType, location string) ResourceAttributes {
-	response := r.Attributes
-	if response == nil {
-		response = ResourceAttributes{}
-	}
+	// Copy attributes to avoid mutating the map returned by the handler.
+	response := make(ResourceAttributes, len(r.Attributes)+5)
+	maps.Copy(response, r.Attributes)
 
 	response[schema.CommonAttributeID] = r.ID
 	if r.ExternalID.Present() {
