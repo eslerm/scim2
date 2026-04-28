@@ -57,10 +57,6 @@ func getIntQueryParam(r *http.Request, key string, def int) (int, error) {
 	return 0, fmt.Errorf("invalid query parameter, \"%s\" must be an integer", key)
 }
 
-func parseIdentifier(path, endpoint string) (string, error) {
-	return url.PathUnescape(strings.TrimPrefix(path, endpoint+"/"))
-}
-
 func resourceLocation(resourceType ResourceType, id, baseURL string) string {
 	relativePath := resourceType.Endpoint[1:] + "/" + url.PathEscape(id)
 	if baseURL == "" {
@@ -82,6 +78,7 @@ type Server struct {
 	rootQueryHandler RootQueryHandler
 	log              *clog.Logger
 	baseURL          string
+	mux              http.Handler
 }
 
 func NewServer(args *ServerArgs, opts ...ServerOption) (Server, error) {
@@ -107,7 +104,99 @@ func NewServer(args *ServerArgs, opts ...ServerOption) (Server, error) {
 		opt(s)
 	}
 
+	s.mux = s.buildMux()
+
 	return *s, nil
+}
+
+// buildMux registers all SCIM routes on a new ServeMux and returns it.
+// Called once during NewServer after all ServerOptions have been applied.
+func (s Server) buildMux() *http.ServeMux {
+	mux := http.NewServeMux()
+
+	// Root query endpoint: handler checks whether rootQueryHandler is set.
+	mux.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
+		if s.rootQueryHandler == nil {
+			s.errorHandler(w, &errors.ScimErrorTooMany)
+			return
+		}
+		s.rootResourcesGetHandler(w, r)
+	})
+	mux.HandleFunc("POST /.search", func(w http.ResponseWriter, r *http.Request) {
+		if s.rootQueryHandler == nil {
+			s.errorHandler(w, &errors.ScimErrorTooMany)
+			return
+		}
+		s.rootSearchHandler(w, r)
+	})
+	for _, m := range []string{http.MethodGet, http.MethodPut, http.MethodPatch, http.MethodDelete} {
+		mux.HandleFunc(m+" /.search", func(w http.ResponseWriter, r *http.Request) {
+			s.errorHandler(w, &errors.ScimError{Status: http.StatusMethodNotAllowed})
+		})
+	}
+
+	// TODO(RFC 7644 §3.11): /Me is not implemented. It should return/modify the resource
+	// corresponding to the authenticated subject. Currently returns 501 unconditionally.
+	mux.HandleFunc("/Me", func(w http.ResponseWriter, r *http.Request) {
+		s.errorHandler(w, &errors.ScimError{Status: http.StatusNotImplemented})
+	})
+
+	mux.HandleFunc("GET /Schemas", s.schemasHandler)
+	mux.HandleFunc("GET /Schemas/{id}", func(w http.ResponseWriter, r *http.Request) {
+		s.schemaHandler(w, r.PathValue("id"))
+	})
+
+	mux.HandleFunc("GET /ResourceTypes", s.resourceTypesHandler)
+	mux.HandleFunc("GET /ResourceTypes/{name}", func(w http.ResponseWriter, r *http.Request) {
+		s.resourceTypeHandler(w, r.PathValue("name"))
+	})
+
+	// ServiceProviderConfig responds to any HTTP method.
+	mux.HandleFunc("/ServiceProviderConfig", func(w http.ResponseWriter, r *http.Request) {
+		s.serviceProviderConfigHandler(w)
+	})
+
+	for _, rt := range s.resourceTypes {
+		rt := rt
+		ep := rt.Endpoint // e.g. "/Users"
+
+		mux.HandleFunc("GET "+ep, func(w http.ResponseWriter, r *http.Request) {
+			s.resourcesGetHandler(w, r, rt)
+		})
+		mux.HandleFunc("POST "+ep, func(w http.ResponseWriter, r *http.Request) {
+			s.resourcePostHandler(w, r, rt)
+		})
+		mux.HandleFunc("POST "+ep+"/.search", func(w http.ResponseWriter, r *http.Request) {
+			s.resourceSearchHandler(w, r, rt)
+		})
+		for _, m := range []string{http.MethodGet, http.MethodPut, http.MethodPatch, http.MethodDelete} {
+			mux.HandleFunc(m+" "+ep+"/.search", func(w http.ResponseWriter, r *http.Request) {
+				s.errorHandler(w, &errors.ScimError{Status: http.StatusMethodNotAllowed})
+			})
+		}
+		mux.HandleFunc("GET "+ep+"/{id}", func(w http.ResponseWriter, r *http.Request) {
+			s.resourceGetHandler(w, r, r.PathValue("id"), rt)
+		})
+		mux.HandleFunc("PUT "+ep+"/{id}", func(w http.ResponseWriter, r *http.Request) {
+			s.resourcePutHandler(w, r, r.PathValue("id"), rt)
+		})
+		mux.HandleFunc("PATCH "+ep+"/{id}", func(w http.ResponseWriter, r *http.Request) {
+			s.resourcePatchHandler(w, r, r.PathValue("id"), rt)
+		})
+		mux.HandleFunc("DELETE "+ep+"/{id}", func(w http.ResponseWriter, r *http.Request) {
+			s.resourceDeleteHandler(w, r, r.PathValue("id"), rt)
+		})
+	}
+
+	// Catch-all: SCIM 404 for any unregistered path.
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		s.errorHandler(w, &errors.ScimError{
+			Detail: "Specified endpoint does not exist.",
+			Status: http.StatusNotFound,
+		})
+	})
+
+	return mux
 }
 
 // ServeHTTP dispatches the request to the handler whose pattern most closely matches the request URL.
@@ -117,101 +206,17 @@ func (s Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/scim+json")
 	w = &statusResponseWriter{ResponseWriter: w}
 
-	path := strings.TrimPrefix(r.URL.Path, "/v2")
-
-	switch {
-	case (path == "/" || path == "") && r.Method == http.MethodGet:
-		if s.rootQueryHandler == nil {
-			s.errorHandler(w, &errors.ScimErrorTooMany)
-			return
-		}
-		s.rootResourcesGetHandler(w, r)
-		return
-	case path == "/.search":
-		if r.Method != http.MethodPost {
-			s.errorHandler(w, &errors.ScimError{Status: http.StatusMethodNotAllowed})
-			return
-		}
-		if s.rootQueryHandler == nil {
-			s.errorHandler(w, &errors.ScimErrorTooMany)
-			return
-		}
-		s.rootSearchHandler(w, r)
-		return
-	case path == "/Me":
-		// TODO(RFC 7644 §3.11): /Me is not implemented. It should return/modify the resource
-		// corresponding to the authenticated subject. Currently returns 501 unconditionally.
-		s.errorHandler(w, &errors.ScimError{
-			Status: http.StatusNotImplemented,
-		})
-		return
-	case path == "/Schemas" && r.Method == http.MethodGet:
-		s.schemasHandler(w, r)
-		return
-	case strings.HasPrefix(path, "/Schemas/") && r.Method == http.MethodGet:
-		s.schemaHandler(w, strings.TrimPrefix(path, "/Schemas/"))
-		return
-	case path == "/ResourceTypes" && r.Method == http.MethodGet:
-		s.resourceTypesHandler(w, r)
-		return
-	case strings.HasPrefix(path, "/ResourceTypes/") && r.Method == http.MethodGet:
-		s.resourceTypeHandler(w, strings.TrimPrefix(path, "/ResourceTypes/"))
-		return
-	case path == "/ServiceProviderConfig":
-		s.serviceProviderConfigHandler(w)
-		return
-	}
-
-	for _, resourceType := range s.resourceTypes {
-		if path == resourceType.Endpoint {
-			switch r.Method {
-			case http.MethodPost:
-				s.resourcePostHandler(w, r, resourceType)
-				return
-			case http.MethodGet:
-				s.resourcesGetHandler(w, r, resourceType)
-				return
-			}
-		}
-
-		if path == resourceType.Endpoint+"/.search" {
-			if r.Method != http.MethodPost {
-				s.errorHandler(w, &errors.ScimError{Status: http.StatusMethodNotAllowed})
-				return
-			}
-			s.resourceSearchHandler(w, r, resourceType)
-			return
-		}
-
-		if strings.HasPrefix(path, resourceType.Endpoint+"/") {
-			id, err := parseIdentifier(path, resourceType.Endpoint)
-			if err != nil {
-				break
-			}
-
-			switch r.Method {
-			case http.MethodGet:
-				s.resourceGetHandler(w, r, id, resourceType)
-				return
-			case http.MethodPut:
-				s.resourcePutHandler(w, r, id, resourceType)
-				return
-			case http.MethodPatch:
-				s.resourcePatchHandler(w, r, id, resourceType)
-				return
-			case http.MethodDelete:
-				s.resourceDeleteHandler(w, r, id, resourceType)
-				return
-			}
+	// Strip optional /v2 version prefix before routing.
+	if p := strings.TrimPrefix(r.URL.Path, "/v2"); p != r.URL.Path {
+		r = r.Clone(r.Context())
+		r.URL.Path = p
+		// Normalise empty path so the mux routes cleanly to /{$}.
+		if r.URL.Path == "" {
+			r.URL.Path = "/"
 		}
 	}
 
-	// TODO(RFC 7644 §3.2): Unsupported methods on known endpoints (e.g. DELETE /Users, PUT /ServiceProviderConfig)
-	// fall through to 404 here instead of returning 405 Method Not Allowed.
-	s.errorHandler(w, &errors.ScimError{
-		Detail: "Specified endpoint does not exist.",
-		Status: http.StatusNotFound,
-	})
+	s.mux.ServeHTTP(w, r)
 }
 
 // getSchema extracts the schemas from the resources types defined in the server with given id.
