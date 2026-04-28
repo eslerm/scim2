@@ -1,11 +1,16 @@
+// Package scim provides an HTTP server implementation of the SCIM 2.0 protocol
+// as specified in RFC 7644 (protocol) and RFC 7643 (schema).
 package scim
 
 import (
 	"fmt"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
+
+	"github.com/chainguard-dev/clog"
 
 	"github.com/elimity-com/scim/errors"
 	"github.com/elimity-com/scim/filter"
@@ -56,7 +61,7 @@ func parseIdentifier(path, endpoint string) (string, error) {
 	return url.PathUnescape(strings.TrimPrefix(path, endpoint+"/"))
 }
 
-func resourceLocation(resourceType ResourceType, id string, baseURL string) string {
+func resourceLocation(resourceType ResourceType, id, baseURL string) string {
 	relativePath := resourceType.Endpoint[1:] + "/" + url.PathEscape(id)
 	if baseURL == "" {
 		return relativePath
@@ -75,7 +80,7 @@ type Server struct {
 	config           ServiceProviderConfig
 	resourceTypes    []ResourceType
 	rootQueryHandler RootQueryHandler
-	log              Logger
+	log              *clog.Logger
 	baseURL          string
 }
 
@@ -95,7 +100,7 @@ func NewServer(args *ServerArgs, opts ...ServerOption) (Server, error) {
 	s := &Server{
 		config:        *args.ServiceProviderConfig,
 		resourceTypes: args.ResourceTypes,
-		log:           &noopLogger{},
+		log:           clog.New(slog.DiscardHandler),
 	}
 
 	for _, opt := range opts {
@@ -140,16 +145,16 @@ func (s Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		s.schemasHandler(w, r)
 		return
 	case strings.HasPrefix(path, "/Schemas/") && r.Method == http.MethodGet:
-		s.schemaHandler(w, r, strings.TrimPrefix(path, "/Schemas/"))
+		s.schemaHandler(w, strings.TrimPrefix(path, "/Schemas/"))
 		return
 	case path == "/ResourceTypes" && r.Method == http.MethodGet:
 		s.resourceTypesHandler(w, r)
 		return
 	case strings.HasPrefix(path, "/ResourceTypes/") && r.Method == http.MethodGet:
-		s.resourceTypeHandler(w, r, strings.TrimPrefix(path, "/ResourceTypes/"))
+		s.resourceTypeHandler(w, strings.TrimPrefix(path, "/ResourceTypes/"))
 		return
 	case path == "/ServiceProviderConfig":
-		s.serviceProviderConfigHandler(w, r)
+		s.serviceProviderConfigHandler(w)
 		return
 	}
 
@@ -313,7 +318,7 @@ func WithBaseURL(baseURL string) ServerOption {
 }
 
 // WithLogger sets the logger for the server.
-func WithLogger(logger Logger) ServerOption {
+func WithLogger(logger *clog.Logger) ServerOption {
 	return func(s *Server) {
 		if logger != nil {
 			s.log = logger
