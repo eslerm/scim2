@@ -7,9 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	datetime "github.com/di-wu/xsd-datetime"
-
 	"github.com/elimity-com/scim/errors"
+	"github.com/elimity-com/scim/internal/datetime"
 	"github.com/elimity-com/scim/optional"
 )
 

@@ -3,9 +3,9 @@ package filter
 import (
 	"fmt"
 
-	datetime "github.com/di-wu/xsd-datetime"
 	"github.com/scim2/filter-parser/v2"
 
+	"github.com/elimity-com/scim/internal/datetime"
 	"github.com/elimity-com/scim/schema"
 )
 

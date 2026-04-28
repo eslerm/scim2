@@ -5,8 +5,9 @@ import (
 	"strings"
 	"time"
 
-	datetime "github.com/di-wu/xsd-datetime"
 	"github.com/scim2/filter-parser/v2"
+
+	"github.com/elimity-com/scim/internal/datetime"
 )
 
 // cmpDateTime returns a compare function that compares a given value to the reference string/time based on the given
