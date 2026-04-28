@@ -2,8 +2,9 @@ package filter
 
 import (
 	"fmt"
-	"github.com/scim2/filter-parser/v2"
 	"strings"
+
+	"github.com/scim2/filter-parser/v2"
 )
 
 // cmpBinary returns a compare function that compares a given value to the reference string based on the given attribute
@@ -11,7 +12,7 @@ import (
 //
 // Expects a binary attribute. Will panic on unknown filter operator.
 // Known operators: eq, ne, co, sw, ew, gt, lt, ge and le.
-func cmpBinary(e *filter.AttributeExpression, ref string) (func(interface{}) error, error) {
+func cmpBinary(e *filter.AttributeExpression, ref string) (func(any) error, error) {
 	switch op := e.Operator; op {
 	case filter.EQ:
 		return cmpStr(ref, true, func(v, ref string) error {

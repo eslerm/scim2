@@ -55,7 +55,8 @@ func (r Resource) response(resourceType ResourceType, location string) ResourceA
 	if r.ExternalID.Present() {
 		response[schema.CommonAttributeExternalID] = r.ExternalID.Value()
 	}
-	schemas := []string{resourceType.Schema.ID}
+	schemas := make([]string, 0, 1+len(resourceType.SchemaExtensions))
+	schemas = append(schemas, resourceType.Schema.ID)
 	for _, s := range resourceType.SchemaExtensions {
 		schemas = append(schemas, s.Schema.ID)
 	}
@@ -75,7 +76,7 @@ func (r Resource) response(resourceType ResourceType, location string) ResourceA
 		m.LastModified = r.Meta.LastModified.Format(time.RFC3339)
 	}
 
-	if len(r.Meta.Version) != 0 {
+	if r.Meta.Version != "" {
 		m.Version = r.Meta.Version
 	}
 
@@ -86,7 +87,7 @@ func (r Resource) response(resourceType ResourceType, location string) ResourceA
 
 // ResourceAttributes represents a list of attributes given to the callback method to create or replace
 // a resource based on the given attributes.
-type ResourceAttributes map[string]interface{}
+type ResourceAttributes map[string]any
 
 // ResourceHandler represents a set of callback method that connect the SCIM server with a provider of a certain resource.
 type ResourceHandler interface {

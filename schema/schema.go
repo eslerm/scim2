@@ -1,3 +1,5 @@
+// Package schema provides SCIM attribute definitions, schema types, and
+// validation as specified in RFC 7643.
 package schema
 
 import (
@@ -164,8 +166,8 @@ func (s Schema) MarshalJSON() ([]byte, error) {
 }
 
 // ToMap returns the map representation of a schema.
-func (s Schema) ToMap() map[string]interface{} {
-	return map[string]interface{}{
+func (s Schema) ToMap() map[string]any {
+	return map[string]any{
 		"id":          s.ID,
 		"name":        s.Name.Value(),
 		"description": s.Description.Value(),
@@ -201,24 +203,24 @@ func (s *Schema) UnmarshalJSON(data []byte) error {
 // Validate validates given resource based on the schema, including the
 // "schemas" attribute. Does NOT validate mutability.
 // NOTE: only used in POST and PUT requests where attributes MAY be (re)defined.
-func (s Schema) Validate(resource interface{}) (map[string]interface{}, *errors.ScimError) {
+func (s Schema) Validate(resource any) (map[string]any, *errors.ScimError) {
 	return s.validate(resource, false, true)
 }
 
 // ValidateExtension validates an extension resource without checking the
 // "schemas" attribute, since extensions are nested under their schema ID
 // and do not carry their own "schemas" array.
-func (s Schema) ValidateExtension(resource interface{}) (map[string]interface{}, *errors.ScimError) {
+func (s Schema) ValidateExtension(resource any) (map[string]any, *errors.ScimError) {
 	return s.validate(resource, false, false)
 }
 
 // ValidateMutability validates given resource based on the schema, including strict immutability checks.
-func (s Schema) ValidateMutability(resource interface{}) (map[string]interface{}, *errors.ScimError) {
+func (s Schema) ValidateMutability(resource any) (map[string]any, *errors.ScimError) {
 	return s.validate(resource, true, false)
 }
 
 // ValidatePatchOperation validates an individual operation and its related value.
-func (s Schema) ValidatePatchOperation(operation string, operationValue map[string]interface{}, isExtension bool) *errors.ScimError {
+func (s Schema) ValidatePatchOperation(operation string, operationValue map[string]any, isExtension bool) *errors.ScimError {
 	for k, v := range operationValue {
 		var attr *CoreAttribute
 		var scimErr *errors.ScimError
@@ -254,12 +256,12 @@ func (s Schema) ValidatePatchOperation(operation string, operationValue map[stri
 }
 
 // ValidatePatchOperationValue validates an individual operation and its related value.
-func (s Schema) ValidatePatchOperationValue(operation string, operationValue map[string]interface{}) *errors.ScimError {
+func (s Schema) ValidatePatchOperationValue(operation string, operationValue map[string]any) *errors.ScimError {
 	return s.ValidatePatchOperation(operation, operationValue, false)
 }
 
-func (s Schema) getRawAttributes() []map[string]interface{} {
-	attributes := make([]map[string]interface{}, len(s.Attributes))
+func (s Schema) getRawAttributes() []map[string]any {
+	attributes := make([]map[string]any, len(s.Attributes))
 
 	for i, a := range s.Attributes {
 		attributes[i] = a.getRawAttributes()
@@ -268,8 +270,8 @@ func (s Schema) getRawAttributes() []map[string]interface{} {
 	return attributes
 }
 
-func (s Schema) validate(resource interface{}, checkMutability, checkSchemaID bool) (map[string]interface{}, *errors.ScimError) {
-	core, ok := resource.(map[string]interface{})
+func (s Schema) validate(resource any, checkMutability, checkSchemaID bool) (map[string]any, *errors.ScimError) {
+	core, ok := resource.(map[string]any)
 	if !ok {
 		return nil, &errors.ScimErrorInvalidSyntax
 	}
@@ -280,9 +282,9 @@ func (s Schema) validate(resource interface{}, checkMutability, checkSchemaID bo
 		}
 	}
 
-	attributes := make(map[string]interface{})
+	attributes := make(map[string]any)
 	for _, attribute := range s.Attributes {
-		var hit interface{}
+		var hit any
 		var found bool
 		for k, v := range core {
 			if strings.EqualFold(attribute.name, k) {
@@ -312,13 +314,13 @@ func (s Schema) validate(resource interface{}, checkMutability, checkSchemaID bo
 	return attributes, nil
 }
 
-func (s Schema) validateSchemaID(resource map[string]interface{}) *errors.ScimError {
+func (s Schema) validateSchemaID(resource map[string]any) *errors.ScimError {
 	resourceSchemas, present := resource["schemas"]
 	if !present {
 		return &errors.ScimErrorInvalidSyntax
 	}
 
-	resourceSchemasSlice, ok := resourceSchemas.([]interface{})
+	resourceSchemasSlice, ok := resourceSchemas.([]any)
 	if !ok {
 		return &errors.ScimErrorInvalidSyntax
 	}

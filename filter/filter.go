@@ -1,9 +1,13 @@
+// Package filter provides SCIM filter expression validation and evaluation
+// as specified in RFC 7644 Section 3.4.2.2.
 package filter
 
 import (
 	"fmt"
-	"github.com/elimity-com/scim/schema"
+
 	"github.com/scim2/filter-parser/v2"
+
+	"github.com/elimity-com/scim/schema"
 )
 
 // validateAttributePath checks whether the given attribute path is a valid path within the given reference schema.
@@ -35,7 +39,7 @@ func validateExpression(ref schema.Schema, e filter.Expression) error {
 	case *filter.ValuePath:
 		attr, err := validateAttributePath(ref, e.AttributePath)
 		if err != nil {
-			return nil
+			return nil //nolint:nilerr // attribute not in this schema; caller tries extensions next
 		}
 		if err := validateExpression(
 			schema.Schema{
@@ -88,6 +92,7 @@ func validateOperator(attr schema.CoreAttribute, op filter.CompareOperator) erro
 		switch op {
 		case filter.GT, filter.LT, filter.GE, filter.LE:
 			return fmt.Errorf("operator %q is not supported for %s attributes", op, attr.AttributeType())
+		default:
 		}
 	}
 	return nil
@@ -140,7 +145,7 @@ func (v Validator) GetFilter() filter.Expression {
 }
 
 // PassesFilter checks whether given resources passes the filter.
-func (v Validator) PassesFilter(resource map[string]interface{}) error {
+func (v Validator) PassesFilter(resource map[string]any) error {
 	switch e := v.filter.(type) {
 	case *filter.ValuePath:
 		ref, attr, ok := v.referenceContains(e.AttributePath)
@@ -166,10 +171,9 @@ func (v Validator) PassesFilter(resource map[string]interface{}) error {
 				Attributes: attr.SubAttributes(),
 			},
 		}
-		switch value := value.(type) {
-		case []interface{}:
+		if value, ok := value.([]any); ok {
 			for _, a := range value {
-				attr, ok := a.(map[string]interface{})
+				attr, ok := a.(map[string]any)
 				if !ok {
 					return fmt.Errorf("the target is not a complex attribute")
 				}
@@ -213,7 +217,7 @@ func (v Validator) PassesFilter(resource map[string]interface{}) error {
 				return fmt.Errorf("the resource has no sub-attribute named: %s", subAttrName)
 			}
 
-			attr, ok := value.(map[string]interface{})
+			attr, ok := value.(map[string]any)
 			if !ok {
 				return fmt.Errorf("the target is not a complex attribute")
 			}
@@ -238,20 +242,20 @@ func (v Validator) PassesFilter(resource map[string]interface{}) error {
 
 		if !attr.MultiValued() {
 			if err := cmp(value); err != nil {
-				return fmt.Errorf("the resource does not pass the filter: %s", err)
+				return fmt.Errorf("the resource does not pass the filter: %w", err)
 			}
 			return nil
 		}
 
 		switch value := value.(type) {
-		case []interface{}:
+		case []any:
 			var err error
 			for _, v := range value {
 				if err = cmp(v); err == nil {
 					return nil
 				}
 			}
-			return fmt.Errorf("the resource does not pass the filter: %s", err)
+			return fmt.Errorf("the resource does not pass the filter: %w", err)
 		default:
 			panic(fmt.Sprintf("given value is not a []interface{}: %v", value))
 		}
@@ -296,7 +300,7 @@ func (v Validator) PassesFilter(resource map[string]interface{}) error {
 			v.extensions,
 		}
 		if err := validator.PassesFilter(resource); err != nil {
-			return nil
+			return nil //nolint:nilerr // intentional: NOT-expression inverts the error check
 		}
 		return fmt.Errorf("the resource does not pass the filter")
 	default:

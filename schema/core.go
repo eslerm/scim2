@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	datetime "github.com/di-wu/xsd-datetime"
+
 	"github.com/elimity-com/scim/errors"
 	"github.com/elimity-com/scim/optional"
 )
@@ -18,7 +19,7 @@ var (
 
 // SetAllowStringValues sets whether string values are allowed.
 // If enabled, string values are allowed for booleans, integer and decimal attributes.
-// NOTE: This is NOT a standard SCIM behaviour, and should only be used for compatibility with non-compliant SCIM
+// NOTE: This is NOT a standard SCIM behavior, and should only be used for compatibility with non-compliant SCIM
 // clients, such as the one provided by Microsoft Azure.
 func SetAllowStringValues(enabled bool) {
 	schemaAllowStringValues = enabled
@@ -178,8 +179,8 @@ func (a CoreAttribute) Uniqueness() string {
 }
 
 // ValidateSingular checks whether the given singular value matches the attribute data type. Unknown attributes in
-// given complex value are ignored. The returned interface contains a (sanitised) version of the given attribute.
-func (a CoreAttribute) ValidateSingular(attribute interface{}) (interface{}, *errors.ScimError) {
+// given complex value are ignored. The returned interface contains a (sanitized) version of the given attribute.
+func (a CoreAttribute) ValidateSingular(attribute any) (any, *errors.ScimError) {
 	switch a.typ {
 	case attributeDataTypeBinary:
 		bin, ok := attribute.(string)
@@ -212,15 +213,15 @@ func (a CoreAttribute) ValidateSingular(attribute interface{}) (interface{}, *er
 
 		return b, nil
 	case attributeDataTypeComplex:
-		obj, ok := attribute.(map[string]interface{})
+		obj, ok := attribute.(map[string]any)
 		if !ok {
 			return nil, &errors.ScimErrorInvalidValue
 		}
 
-		attributes := make(map[string]interface{})
+		attributes := make(map[string]any)
 
 		for _, sub := range a.subAttributes {
-			var hit interface{}
+			var hit any
 			var found bool
 			for k, v := range obj {
 				if strings.EqualFold(sub.name, k) {
@@ -324,8 +325,8 @@ func (a CoreAttribute) WithReturned(returned AttributeReturned) CoreAttribute {
 	return a
 }
 
-func (a *CoreAttribute) getRawAttributes() map[string]interface{} {
-	attributes := map[string]interface{}{
+func (a *CoreAttribute) getRawAttributes() map[string]any {
+	attributes := map[string]any{
 		"description": a.description.Value(),
 		"multiValued": a.multiValued,
 		"mutability":  a.mutability,
@@ -343,7 +344,7 @@ func (a *CoreAttribute) getRawAttributes() map[string]interface{} {
 		attributes["referenceTypes"] = a.referenceTypes
 	}
 
-	var rawSubAttributes []map[string]interface{}
+	rawSubAttributes := make([]map[string]any, 0, len(a.subAttributes))
 	for _, subAttr := range a.subAttributes {
 		rawSubAttributes = append(rawSubAttributes, subAttr.getRawAttributes())
 	}
@@ -360,7 +361,7 @@ func (a *CoreAttribute) getRawAttributes() map[string]interface{} {
 	return attributes
 }
 
-func (a CoreAttribute) validate(attribute interface{}) (interface{}, *errors.ScimError) {
+func (a CoreAttribute) validate(attribute any) (any, *errors.ScimError) {
 	// whether or not the attribute is required.
 	if attribute == nil {
 		if !a.required || a.mutability == attributeMutabilityReadOnly {
@@ -382,13 +383,13 @@ func (a CoreAttribute) validate(attribute interface{}) (interface{}, *errors.Sci
 	}
 
 	switch arr := attribute.(type) {
-	case map[string]interface{}:
+	case map[string]any:
 		// return false if the multivalued attribute is empty.
 		if a.required && len(arr) == 0 {
 			return nil, &errors.ScimErrorInvalidValue
 		}
 
-		validMap := map[string]interface{}{}
+		validMap := map[string]any{}
 		for k, v := range arr {
 			for _, sub := range a.subAttributes {
 				if !strings.EqualFold(sub.name, k) {
@@ -403,13 +404,13 @@ func (a CoreAttribute) validate(attribute interface{}) (interface{}, *errors.Sci
 		}
 		return validMap, nil
 
-	case []interface{}:
+	case []any:
 		// return false if the multivalued attribute is empty.
 		if a.required && len(arr) == 0 {
 			return nil, &errors.ScimErrorInvalidValue
 		}
 
-		var attributes []interface{}
+		var attributes []any
 		for _, ele := range arr {
 			attr, scimErr := a.ValidateSingular(ele)
 			if scimErr != nil {

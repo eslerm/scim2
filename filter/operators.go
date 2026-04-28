@@ -2,14 +2,16 @@ package filter
 
 import (
 	"fmt"
+
 	datetime "github.com/di-wu/xsd-datetime"
-	"github.com/elimity-com/scim/schema"
 	"github.com/scim2/filter-parser/v2"
+
+	"github.com/elimity-com/scim/schema"
 )
 
 // createCompareFunction returns a compare function based on the attribute expression and attribute.
 // e.g. `userName eq "john"` will return a string comparator that checks whether the passed value is equal to "john".
-func createCompareFunction(e *filter.AttributeExpression, attr schema.CoreAttribute) (func(interface{}) error, error) {
+func createCompareFunction(e *filter.AttributeExpression, attr schema.CoreAttribute) (func(any) error, error) {
 	switch typ := attr.AttributeType(); typ {
 	case "binary":
 		ref, ok := e.CompareValue.(string)
@@ -38,7 +40,7 @@ func createCompareFunction(e *filter.AttributeExpression, attr schema.CoreAttrib
 		if !ok {
 			return nil, fmt.Errorf("a boolean attribute needs to be compared to a boolean")
 		}
-		return cmpBoolean(e, attr, ref)
+		return cmpBoolean(e, ref)
 	case "decimal":
 		ref, ok := e.CompareValue.(float64)
 		if !ok {

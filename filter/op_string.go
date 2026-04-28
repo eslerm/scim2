@@ -2,14 +2,16 @@ package filter
 
 import (
 	"fmt"
-	"github.com/elimity-com/scim/schema"
-	"github.com/scim2/filter-parser/v2"
 	"strings"
+
+	"github.com/scim2/filter-parser/v2"
+
+	"github.com/elimity-com/scim/schema"
 )
 
-func cmpStr(ref string, caseExact bool, cmp func(v, ref string) error) (func(interface{}) error, error) {
+func cmpStr(ref string, caseExact bool, cmp func(v, ref string) error) (func(any) error, error) {
 	if caseExact {
-		return func(i interface{}) error {
+		return func(i any) error {
 			value, ok := i.(string)
 			if !ok {
 				panic(fmt.Sprintf("given value is not a string: %v", i))
@@ -17,7 +19,7 @@ func cmpStr(ref string, caseExact bool, cmp func(v, ref string) error) (func(int
 			return cmp(value, ref)
 		}, nil
 	}
-	return func(i interface{}) error {
+	return func(i any) error {
 		value, ok := i.(string)
 		if !ok {
 			panic(fmt.Sprintf("given value is not a string: %v", i))
@@ -31,7 +33,7 @@ func cmpStr(ref string, caseExact bool, cmp func(v, ref string) error) (func(int
 //
 // Expects a string/reference attribute. Will panic on unknown filter operator.
 // Known operators: eq, ne, co, sw, ew, gt, lt, ge and le.
-func cmpString(e *filter.AttributeExpression, attr schema.CoreAttribute, ref string) (func(interface{}) error, error) {
+func cmpString(e *filter.AttributeExpression, attr schema.CoreAttribute, ref string) (func(any) error, error) {
 	switch op := e.Operator; op {
 	case filter.EQ:
 		return cmpStr(ref, attr.CaseExact(), func(v, ref string) error {
@@ -84,14 +86,14 @@ func cmpString(e *filter.AttributeExpression, attr schema.CoreAttribute, ref str
 		})
 	case filter.GE:
 		return cmpStr(ref, attr.CaseExact(), func(v, ref string) error {
-			if strings.Compare(v, ref) < 0 {
+			if v < ref {
 				return fmt.Errorf("%s is not lexicographically greater or equal to %s", v, ref)
 			}
 			return nil
 		})
 	case filter.LE:
 		return cmpStr(ref, attr.CaseExact(), func(v, ref string) error {
-			if strings.Compare(v, ref) > 0 {
+			if v > ref {
 				return fmt.Errorf("%s is not lexicographically less or equal to %s", v, ref)
 			}
 			return nil

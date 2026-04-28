@@ -31,27 +31,27 @@ func (s Server) errorHandler(w http.ResponseWriter, scimErr *errors.ScimError) {
 }
 
 // parseSearchRequest reads and parses a search request body, returning a SearchParams.
-func (s Server) parseSearchRequest(r *http.Request) (searchRequest, SearchParams, *errors.ScimError) {
+func (s Server) parseSearchRequest(r *http.Request) (SearchParams, *errors.ScimError) {
 	data, err := readBody(r)
 	if err != nil {
-		return searchRequest{}, SearchParams{}, &errors.ScimErrorInternal
+		return SearchParams{}, &errors.ScimErrorInternal
 	}
 
 	var sr searchRequest
 	if err := json.Unmarshal(data, &sr); err != nil {
 		scimErr := errors.ScimError{
-			Status: 400,
+			Status: http.StatusBadRequest,
 			Detail: "Invalid search request body.",
 		}
-		return searchRequest{}, SearchParams{}, &scimErr
+		return SearchParams{}, &scimErr
 	}
 
 	if len(sr.Schemas) != 1 || sr.Schemas[0] != "urn:ietf:params:scim:api:messages:2.0:SearchRequest" {
-		return searchRequest{}, SearchParams{}, &errors.ScimErrorInvalidValue
+		return SearchParams{}, &errors.ScimErrorInvalidValue
 	}
 
 	if sr.SortOrder != "" && sr.SortOrder != "ascending" && sr.SortOrder != "descending" {
-		return searchRequest{}, SearchParams{}, &errors.ScimErrorInvalidValue
+		return SearchParams{}, &errors.ScimErrorInvalidValue
 	}
 
 	defaultCount := s.config.getItemsPerPage()
@@ -75,7 +75,7 @@ func (s Server) parseSearchRequest(r *http.Request) (searchRequest, SearchParams
 		startIndex = defaultStartIndex
 	}
 
-	return sr, SearchParams{
+	return SearchParams{
 		Attributes:         sr.Attributes,
 		Count:              count,
 		ExcludedAttributes: sr.ExcludedAttributes,
@@ -277,13 +277,13 @@ func (s Server) resourceSearchHandler(w http.ResponseWriter, r *http.Request, re
 	searcher, ok := resourceType.Handler.(ResourceSearcher)
 	if !ok {
 		s.errorHandler(w, &errors.ScimError{
-			Status: 501,
+			Status: http.StatusNotImplemented,
 			Detail: "Search is not supported for this resource type.",
 		})
 		return
 	}
 
-	_, params, scimErr := s.parseSearchRequest(r)
+	params, scimErr := s.parseSearchRequest(r)
 	if scimErr != nil {
 		s.errorHandler(w, scimErr)
 		return
@@ -337,7 +337,7 @@ func (s Server) resourceSearchHandler(w http.ResponseWriter, r *http.Request, re
 
 // resourceTypeHandler receives an HTTP GET to retrieve individual resource types which can be returned by appending the
 // resource types name to the /ResourceTypes endpoint. For example: "/ResourceTypes/User".
-func (s Server) resourceTypeHandler(w http.ResponseWriter, r *http.Request, name string) {
+func (s Server) resourceTypeHandler(w http.ResponseWriter, name string) {
 	var resourceType ResourceType
 	for _, r := range s.resourceTypes {
 		if r.Name == name {
@@ -382,7 +382,7 @@ func (s Server) resourceTypesHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	start, end := clamp(params.StartIndex-1, params.Count, len(s.resourceTypes))
-	var resources []interface{}
+	var resources []any
 	for _, v := range s.resourceTypes[start:end] {
 		resources = append(resources, v.getRaw())
 	}
@@ -506,7 +506,7 @@ func (s Server) rootResourcesGetHandler(w http.ResponseWriter, r *http.Request) 
 // If the RootQueryHandler also implements ResourceSearcher, the Search method is called
 // with full SearchParams. Otherwise, GetAll is called with only Count and StartIndex.
 func (s Server) rootSearchHandler(w http.ResponseWriter, r *http.Request) {
-	_, params, scimErr := s.parseSearchRequest(r)
+	params, scimErr := s.parseSearchRequest(r)
 	if scimErr != nil {
 		s.errorHandler(w, scimErr)
 		return
@@ -558,7 +558,7 @@ func (s Server) rootSearchHandler(w http.ResponseWriter, r *http.Request) {
 
 // schemaHandler receives an HTTP GET to retrieve individual schema definitions which can be returned by appending the
 // schema URI to the /Schemas endpoint. For example: "/Schemas/urn:ietf:params:scim:schemas:core:2.0:User".
-func (s Server) schemaHandler(w http.ResponseWriter, r *http.Request, id string) {
+func (s Server) schemaHandler(w http.ResponseWriter, id string) {
 	getSchema := s.getSchema(id)
 	if getSchema.ID != id {
 		scimErr := errors.ScimErrorResourceNotFound(id)
@@ -596,7 +596,7 @@ func (s Server) schemasHandler(w http.ResponseWriter, r *http.Request) {
 
 	var (
 		start, end = clamp(params.StartIndex-1, params.Count, len(s.getSchemas()))
-		resources  []interface{}
+		resources  []any
 	)
 	if validator := params.FilterValidator; validator != nil {
 		if err := validator.Validate(); err != nil {
@@ -642,7 +642,7 @@ func (s Server) schemasHandler(w http.ResponseWriter, r *http.Request) {
 
 // serviceProviderConfigHandler receives an HTTP GET to this endpoint will return a JSON structure that describes the
 // SCIM specification features available on a service provider.
-func (s Server) serviceProviderConfigHandler(w http.ResponseWriter, r *http.Request) {
+func (s Server) serviceProviderConfigHandler(w http.ResponseWriter) {
 	raw, err := json.Marshal(s.config.getRaw())
 	if err != nil {
 		s.errorHandler(w, &errors.ScimErrorInternal)

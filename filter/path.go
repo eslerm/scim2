@@ -1,8 +1,9 @@
 package filter
 
 import (
-	"github.com/elimity-com/scim/schema"
 	"github.com/scim2/filter-parser/v2"
+
+	"github.com/elimity-com/scim/schema"
 )
 
 // MultiValuedFilterAttributes returns the attributes of the given attribute on which can be filtered. In the case of a

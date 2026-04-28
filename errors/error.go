@@ -1,3 +1,5 @@
+// Package errors defines SCIM error types and pre-defined sentinel errors as
+// specified in RFC 7644 Section 3.12.
 package errors
 
 import (
@@ -5,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -114,12 +117,7 @@ func checkApplicability(err ScimError, method string) bool {
 		return false
 	}
 
-	for _, m := range methods {
-		if m == method {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(methods, method)
 }
 
 // ScimError is a SCIM error response to indicate operation success or failure.

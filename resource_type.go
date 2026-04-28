@@ -13,7 +13,7 @@ import (
 )
 
 // unmarshal unifies the unmarshal of the requests.
-func unmarshal(data []byte, v interface{}) error {
+func unmarshal(data []byte, v any) error {
 	d := json.NewDecoder(bytes.NewReader(data))
 	d.UseNumber()
 	return d.Decode(v)
@@ -39,8 +39,8 @@ type ResourceType struct {
 	Handler ResourceHandler
 }
 
-func (t ResourceType) getRaw() map[string]interface{} {
-	return map[string]interface{}{
+func (t ResourceType) getRaw() map[string]any {
+	return map[string]any{
 		"schemas":          []string{"urn:ietf:params:scim:schemas:core:2.0:ResourceType"},
 		"id":               t.ID.Value(),
 		"name":             t.Name,
@@ -51,10 +51,10 @@ func (t ResourceType) getRaw() map[string]interface{} {
 	}
 }
 
-func (t ResourceType) getRawSchemaExtensions() []map[string]interface{} {
-	schemas := make([]map[string]interface{}, 0)
+func (t ResourceType) getRawSchemaExtensions() []map[string]any {
+	schemas := make([]map[string]any, 0, len(t.SchemaExtensions))
 	for _, e := range t.SchemaExtensions {
-		schemas = append(schemas, map[string]interface{}{
+		schemas = append(schemas, map[string]any{
 			"schema":   e.Schema.ID,
 			"required": e.Required,
 		})
@@ -63,7 +63,7 @@ func (t ResourceType) getRawSchemaExtensions() []map[string]interface{} {
 }
 
 func (t ResourceType) getSchemaExtensions() []schema.Schema {
-	var extensions []schema.Schema
+	extensions := make([]schema.Schema, 0, len(t.SchemaExtensions))
 	for _, e := range t.SchemaExtensions {
 		extensions = append(extensions, e.Schema)
 	}
@@ -90,7 +90,7 @@ func (t ResourceType) schemaWithCommon() schema.Schema {
 }
 
 func (t ResourceType) validate(raw []byte) (ResourceAttributes, *scimErrors.ScimError) {
-	var m map[string]interface{}
+	var m map[string]any
 	if err := unmarshal(raw, &m); err != nil {
 		return ResourceAttributes{}, &scimErrors.ScimErrorInvalidSyntax
 	}

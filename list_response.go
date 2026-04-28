@@ -34,15 +34,15 @@ type Page struct {
 //
 // These meta fields are merged into any existing "meta" map in Attributes. If the caller already provides a "meta"
 // map (e.g. with "resourceType"), the injected fields are added alongside it without overwriting existing keys.
-func (p Page) rawResources() []interface{} {
+func (p Page) rawResources() []any {
 	if len(p.Resources) == 0 {
 		if p.Resources != nil {
-			return []interface{}{}
+			return []any{}
 		}
 		return nil
 	}
 
-	var resources []interface{}
+	var resources []any
 	for _, v := range p.Resources {
 		attrs := v.Attributes
 		if attrs == nil {
@@ -55,30 +55,30 @@ func (p Page) rawResources() []interface{} {
 		}
 
 		// Merge Meta fields into the existing "meta" map if present, or create a new one.
-		var metaMap map[string]interface{}
+		var metaMap map[string]any
 		if existing, ok := attrs[schema.CommonAttributeMeta]; ok {
-			if m, ok := existing.(map[string]interface{}); ok {
+			if m, ok := existing.(map[string]any); ok {
 				metaMap = m
 			}
 		}
 		hasMeta := false
 		if v.Meta.Created != nil {
 			if metaMap == nil {
-				metaMap = map[string]interface{}{}
+				metaMap = map[string]any{}
 			}
 			metaMap["created"] = v.Meta.Created.Format(time.RFC3339)
 			hasMeta = true
 		}
 		if v.Meta.LastModified != nil {
 			if metaMap == nil {
-				metaMap = map[string]interface{}{}
+				metaMap = map[string]any{}
 			}
 			metaMap["lastModified"] = v.Meta.LastModified.Format(time.RFC3339)
 			hasMeta = true
 		}
-		if len(v.Meta.Version) != 0 {
+		if v.Meta.Version != "" {
 			if metaMap == nil {
-				metaMap = map[string]interface{}{}
+				metaMap = map[string]any{}
 			}
 			metaMap["version"] = v.Meta.Version
 			hasMeta = true
@@ -92,17 +92,17 @@ func (p Page) rawResources() []interface{} {
 	return resources
 }
 
-func (p Page) resources(resourceType ResourceType, baseURL string) []interface{} {
+func (p Page) resources(resourceType ResourceType, baseURL string) []any {
 	// If the page.Resources is nil, then it will also be represented as a `null` in the response.
 	// Otherwise is it is an empty slice then it will result in an empty array `[]`.
 	if len(p.Resources) == 0 {
 		if p.Resources != nil {
-			return []interface{}{}
+			return []any{}
 		}
 		return nil
 	}
 
-	var resources []interface{}
+	var resources []any
 	for _, v := range p.Resources {
 		location := resourceLocation(resourceType, v.ID, baseURL)
 		resources = append(
@@ -132,11 +132,11 @@ type listResponse struct {
 	// Resources is a multi-valued list of complex objects containing the requested resources.
 	// This may be a subset of the full set of resources if pagination is requested.
 	// REQUIRED if TotalResults is non-zero.
-	Resources []interface{}
+	Resources []any
 }
 
 func (l listResponse) MarshalJSON() ([]byte, error) {
-	return json.Marshal(map[string]interface{}{
+	return json.Marshal(map[string]any{
 		"schemas":      []string{"urn:ietf:params:scim:api:messages:2.0:ListResponse"},
 		"totalResults": l.TotalResults,
 		"itemsPerPage": l.ItemsPerPage,

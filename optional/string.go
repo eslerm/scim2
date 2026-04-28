@@ -1,3 +1,5 @@
+// Package optional provides optional-value types that distinguish between
+// absent and explicitly null/empty field values during JSON marshaling.
 package optional
 
 import "encoding/json"

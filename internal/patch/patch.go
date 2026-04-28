@@ -4,11 +4,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	f "github.com/elimity-com/scim/filter"
 	"strings"
 
-	"github.com/elimity-com/scim/schema"
 	"github.com/scim2/filter-parser/v2"
+
+	f "github.com/elimity-com/scim/filter"
+	"github.com/elimity-com/scim/schema"
 )
 
 // Op represents the possible value the operation is to perform.
@@ -28,7 +29,7 @@ const (
 type OperationValidator struct {
 	Op    Op
 	Path  *filter.Path
-	value interface{}
+	value any
 
 	schema  schema.Schema
 	schemas map[string]schema.Schema
@@ -40,7 +41,7 @@ func NewValidator(patchReq []byte, s schema.Schema, extensions ...schema.Schema)
 	var operation struct {
 		Op    string
 		Path  string
-		Value interface{}
+		Value any
 	}
 
 	d := json.NewDecoder(bytes.NewReader(patchReq))
@@ -51,15 +52,14 @@ func NewValidator(patchReq []byte, s schema.Schema, extensions ...schema.Schema)
 
 	operation.Op = strings.ToLower(operation.Op)
 
-	switch v := operation.Value.(type) {
-	// Okta also send the ID on PATCH requests.
+	// Okta also sends the ID on PATCH requests.
 	// See: internal/idp_test/testdata/okta/update_group_name.json
 	// https://developer.okta.com/docs/reference/scim/scim-20/#update-a-specific-group-name
-	case map[string]interface{}:
+	if v, ok := operation.Value.(map[string]any); ok {
 		var key string
 		var found bool
 		for k := range v {
-			if strings.ToLower(k) == "id" {
+			if strings.EqualFold(k, "id") {
 				if found {
 					return OperationValidator{}, fmt.Errorf("duplicate attributes: %s and %s", k, key)
 				}
@@ -100,10 +100,10 @@ func NewValidator(patchReq []byte, s schema.Schema, extensions ...schema.Schema)
 }
 
 // Validate validates the PATCH operation. Unknown attributes in complex values are ignored. The returned interface
-// contains a (sanitised) version of given value based on the attribute it targets. Multi-valued attributes are
+// contains a (sanitized) version of given value based on the attribute it targets. Multi-valued attributes are
 // returned wrapped in a slice, unless a value expression is present in the path (e.g. addresses[type eq "work"]),
 // in which case a singular value is returned unwrapped as it targets a specific matched element.
-func (v OperationValidator) Validate() (interface{}, error) {
+func (v OperationValidator) Validate() (any, error) {
 	switch v.Op {
 	case OperationAdd, OperationReplace:
 		return v.validateUpdate()
@@ -176,13 +176,13 @@ func (v OperationValidator) getRefSubAttribute(refAttr *schema.CoreAttribute, su
 
 // validateEmptyPath validates paths that don't have a "path" value. In this case the target location is assumed to be
 // the resource itself. The "value" parameter contains a set of attributes to be added to the resource.
-func (v OperationValidator) validateEmptyPath() (interface{}, error) {
-	attributes, ok := v.value.(map[string]interface{})
+func (v OperationValidator) validateEmptyPath() (any, error) {
+	attributes, ok := v.value.(map[string]any)
 	if !ok {
 		return nil, fmt.Errorf("the given value should be a complex attribute if path is empty")
 	}
 
-	rootValue := map[string]interface{}{}
+	rootValue := map[string]any{}
 	for p, value := range attributes {
 		path, err := filter.ParsePath([]byte(p))
 		if err != nil {
