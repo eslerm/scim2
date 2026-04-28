@@ -109,6 +109,8 @@ func AttributeReturnedRequest() AttributeReturned {
 }
 
 // AttributeUniqueness is a single keyword value that specifies how the service provider enforces uniqueness of attribute values.
+// TODO(RFC 7643 §2.2): Uniqueness is modeled for schema serialization only. The framework does not enforce
+// it at runtime — handlers must detect conflicts themselves and return ScimErrorUniqueness.
 type AttributeUniqueness struct {
 	u attributeUniqueness
 }

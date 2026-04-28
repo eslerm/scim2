@@ -68,6 +68,7 @@ func (config ServiceProviderConfig) getRaw() map[string]any {
 		"patch": map[string]bool{
 			"supported": config.SupportPatch,
 		},
+		// TODO(RFC 7644 §3.7): Bulk operations are not implemented. No /Bulk route exists.
 		"bulk": map[string]any{
 			"supported":      false,
 			"maxOperations":  1000,
@@ -77,6 +78,8 @@ func (config ServiceProviderConfig) getRaw() map[string]any {
 			"supported":  config.SupportFiltering,
 			"maxResults": config.MaxResults,
 		},
+		// TODO(RFC 7643 §5): changePassword, sort, and etag are hardcoded false. Add SupportChangePassword,
+		// SupportSort, and SupportETag fields to ServiceProviderConfig so callers can advertise support.
 		"changePassword": map[string]bool{
 			"supported": false,
 		},

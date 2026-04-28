@@ -111,6 +111,8 @@ func NewServer(args *ServerArgs, opts ...ServerOption) (Server, error) {
 }
 
 // ServeHTTP dispatches the request to the handler whose pattern most closely matches the request URL.
+// TODO(RFC 7644 §3): Incoming Content-Type and Accept headers are not validated. Any content type is
+// accepted; responses always use application/scim+json regardless of the Accept header.
 func (s Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/scim+json")
 	w = &statusResponseWriter{ResponseWriter: w}
@@ -137,6 +139,8 @@ func (s Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		s.rootSearchHandler(w, r)
 		return
 	case path == "/Me":
+		// TODO(RFC 7644 §3.11): /Me is not implemented. It should return/modify the resource
+		// corresponding to the authenticated subject. Currently returns 501 unconditionally.
 		s.errorHandler(w, &errors.ScimError{
 			Status: http.StatusNotImplemented,
 		})
@@ -202,6 +206,8 @@ func (s Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// TODO(RFC 7644 §3.2): Unsupported methods on known endpoints (e.g. DELETE /Users, PUT /ServiceProviderConfig)
+	// fall through to 404 here instead of returning 405 Method Not Allowed.
 	s.errorHandler(w, &errors.ScimError{
 		Detail: "Specified endpoint does not exist.",
 		Status: http.StatusNotFound,

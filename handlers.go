@@ -9,6 +9,8 @@ import (
 	"github.com/elimity-com/scim/schema"
 )
 
+// TODO(RFC 7644 §3 / RFC 7235): 401 responses do not include a WWW-Authenticate header. Authentication
+// is delegated to upstream middleware; the framework has no hook to set the challenge header.
 func (s Server) errorHandler(w http.ResponseWriter, scimErr *errors.ScimError) {
 	raw, err := json.Marshal(scimErr)
 	if err != nil {
@@ -101,6 +103,10 @@ func (s Server) resourceDeleteHandler(w http.ResponseWriter, r *http.Request, id
 
 // resourceGetHandler receives an HTTP GET request to the resource endpoint, e.g., "/Users/{id}" or "/Groups/{id}",
 // where "{id}" is a resource identifier to retrieve a known resource.
+// TODO(RFC 7644 §3.4.2.5): attributes and excludedAttributes query parameters are not parsed or forwarded to
+// the handler. GET /Users/{id}?attributes=userName,id is silently ignored.
+// TODO(RFC 7644 §3.14): If-Match / If-None-Match conditional request headers are not read. ETag is emitted
+// when Meta.Version is set, but 412 Precondition Failed is never returned by the framework.
 func (s Server) resourceGetHandler(w http.ResponseWriter, r *http.Request, id string, resourceType ResourceType) {
 	resource, getErr := resourceType.Handler.Get(r, id)
 	if getErr != nil {
@@ -136,6 +142,9 @@ func (s Server) resourceGetHandler(w http.ResponseWriter, r *http.Request, id st
 
 // resourcePatchHandler receives an HTTP PATCH to the resource endpoint, e.g., "/Users/{id}" or "/Groups/{id}", where
 // "{id}" is a resource identifier to replace a resource's attributes.
+// TODO(RFC 7644 §3.5.2): PATCH atomicity is the handler's responsibility. The framework validates all
+// operations and calls Handler.Patch once, but cannot guarantee the handler applies them atomically.
+// TODO(RFC 7644 §3.14): If-Match is not checked; see resourceGetHandler.
 func (s Server) resourcePatchHandler(w http.ResponseWriter, r *http.Request, id string, resourceType ResourceType) {
 	patch, scimErr := resourceType.validatePatch(r)
 	if scimErr != nil {
@@ -415,6 +424,9 @@ func (s Server) resourceTypesHandler(w http.ResponseWriter, r *http.Request) {
 
 // resourcesGetHandler receives an HTTP GET request to the resource endpoint, e.g., "/Users" or "/Groups", to retrieve
 // all known resources.
+// TODO(RFC 7644 §3.4.2.3): sortBy and sortOrder query parameters are not parsed here; they are only
+// surfaced via SearchParams in POST /.search. Add parsing to ListRequestParams and parseRequestParams.
+// TODO(RFC 7644 §3.4.2.5): attributes and excludedAttributes query parameters are not parsed here.
 func (s Server) resourcesGetHandler(w http.ResponseWriter, r *http.Request, resourceType ResourceType) {
 	params, paramsErr := s.parseRequestParams(r, resourceType.Schema, resourceType.getSchemaExtensions()...)
 	if paramsErr != nil {

@@ -21,6 +21,10 @@ type ListRequestParams struct {
 
 	// StartIndex The 1-based index of the first query result. A value less than 1 SHALL be interpreted as 1.
 	StartIndex int
+
+	// TODO(RFC 7644 §3.4.2.3): SortBy and SortOrder are not parsed from GET query parameters and not forwarded
+	// to handlers. GET /Users?sortBy=userName is silently ignored. Only POST /.search surfaces these via
+	// SearchParams. Add SortBy/SortOrder fields here and parse them in parseRequestParams.
 }
 
 // Meta represents the metadata of a resource.
@@ -45,6 +49,10 @@ type Resource struct {
 	Meta Meta
 }
 
+// TODO(RFC 7643 §2.2): The returned characteristic (always/never/default/request) is modeled but never
+// enforced here. Attributes with returned:"never" or returned:"writeOnly" are not automatically stripped
+// from the response — handlers are solely responsible for omitting them. The framework should filter
+// r.Attributes against the schema's returned policy before marshaling.
 func (r Resource) response(resourceType ResourceType, location string) ResourceAttributes {
 	response := r.Attributes
 	if response == nil {
