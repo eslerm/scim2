@@ -2,6 +2,7 @@ package scim
 
 import (
 	"fmt"
+	"maps"
 	"math/rand"
 	"net/http"
 	"strings"
@@ -14,7 +15,7 @@ import (
 )
 
 func ExampleResourceHandler() {
-	var r interface{} = testResourceHandler{}
+	var r any = testResourceHandler{}
 	_, ok := r.(ResourceHandler)
 	fmt.Println(ok)
 	// Output: true
@@ -148,8 +149,8 @@ func (h testResourceHandler) Get(r *http.Request, id string) (Resource, error) {
 		return Resource{}, errors.ScimErrorResourceNotFound(id)
 	}
 
-	created, _ := time.ParseInLocation(time.RFC3339, fmt.Sprintf("%v", data.meta["created"]), time.UTC)
-	lastModified, _ := time.Parse(time.RFC3339, fmt.Sprintf("%v", data.meta["lastModified"]))
+	created, _ := time.ParseInLocation(time.RFC3339, data.meta["created"], time.UTC)
+	lastModified, _ := time.Parse(time.RFC3339, data.meta["lastModified"])
 
 	// return resource with given identifier
 	return Resource{
@@ -159,7 +160,7 @@ func (h testResourceHandler) Get(r *http.Request, id string) (Resource, error) {
 		Meta: Meta{
 			Created:      &created,
 			LastModified: &lastModified,
-			Version:      fmt.Sprintf("%v", data.meta["version"]),
+			Version:      data.meta["version"],
 		},
 	}, nil
 }
@@ -206,9 +207,9 @@ func (h testResourceHandler) Patch(r *http.Request, id string, operations []Patc
 			if op.Path != nil {
 				h.data[id].resourceAttributes[op.Path.String()] = op.Value
 			} else {
-				valueMap := op.Value.(map[string]interface{})
+				valueMap := op.Value.(map[string]any)
 				for k, v := range valueMap {
-					if arr, ok := h.data[id].resourceAttributes[k].([]interface{}); ok {
+					if arr, ok := h.data[id].resourceAttributes[k].([]any); ok {
 						arr = append(arr, v)
 						h.data[id].resourceAttributes[k] = arr
 					} else {
@@ -220,17 +221,15 @@ func (h testResourceHandler) Patch(r *http.Request, id string, operations []Patc
 			if op.Path != nil {
 				h.data[id].resourceAttributes[op.Path.String()] = op.Value
 			} else {
-				valueMap := op.Value.(map[string]interface{})
-				for k, v := range valueMap {
-					h.data[id].resourceAttributes[k] = v
-				}
+				valueMap := op.Value.(map[string]any)
+				maps.Copy(h.data[id].resourceAttributes, valueMap)
 			}
 		case PatchOperationRemove:
 			h.data[id].resourceAttributes[op.Path.String()] = nil
 		}
 	}
 
-	created, _ := time.ParseInLocation(time.RFC3339, fmt.Sprintf("%v", h.data[id].meta["created"]), time.UTC)
+	created, _ := time.ParseInLocation(time.RFC3339, h.data[id].meta["created"], time.UTC)
 	now := time.Now()
 
 	// return resource with replaced attributes
@@ -298,14 +297,14 @@ func (h testResourceHandler) noContentOperation(id string, op PatchOperation) bo
 	}
 
 	switch opValue := op.Value.(type) {
-	case map[string]interface{}:
+	case map[string]any:
 		for k, v := range opValue {
 			if v == dataValue.resourceAttributes[k] {
 				return true
 			}
 		}
 
-	case []map[string]interface{}:
+	case []map[string]any:
 		for _, m := range opValue {
 			for k, v := range m {
 				if v == dataValue.resourceAttributes[k] {

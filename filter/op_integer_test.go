@@ -2,10 +2,12 @@ package filter_test
 
 import (
 	"fmt"
+	"testing"
+
+	"github.com/scim2/filter-parser/v2"
+
 	internal "github.com/elimity-com/scim/filter"
 	"github.com/elimity-com/scim/schema"
-	"github.com/scim2/filter-parser/v2"
-	"testing"
 )
 
 func TestValidatorInteger(t *testing.T) {
@@ -21,7 +23,7 @@ func TestValidatorInteger(t *testing.T) {
 				})),
 			},
 		}
-		attrs = [3]map[string]interface{}{
+		attrs = [3]map[string]any{
 			{"int": -1}, // less
 			{"int": 0},  // equal
 			{"int": 10}, // greater

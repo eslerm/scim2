@@ -2,10 +2,12 @@ package filter_test
 
 import (
 	"fmt"
+	"testing"
+
+	"github.com/scim2/filter-parser/v2"
+
 	internal "github.com/elimity-com/scim/filter"
 	"github.com/elimity-com/scim/schema"
-	"github.com/scim2/filter-parser/v2"
-	"testing"
 )
 
 func TestValidatorString(t *testing.T) {
@@ -13,7 +15,7 @@ func TestValidatorString(t *testing.T) {
 		exp = func(op filter.CompareOperator) string {
 			return fmt.Sprintf("str %s \"x\"", op)
 		}
-		attrs = [3]map[string]interface{}{
+		attrs = [3]map[string]any{
 			{"str": "x"},
 			{"str": "X"},
 			{"str": "y"},

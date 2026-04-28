@@ -2,10 +2,12 @@ package filter_test
 
 import (
 	"fmt"
+	"testing"
+
+	"github.com/scim2/filter-parser/v2"
+
 	internal "github.com/elimity-com/scim/filter"
 	"github.com/elimity-com/scim/schema"
-	"github.com/scim2/filter-parser/v2"
-	"testing"
 )
 
 func TestValidatorDateTime(t *testing.T) {
@@ -20,7 +22,7 @@ func TestValidatorDateTime(t *testing.T) {
 				})),
 			},
 		}
-		attrs = [3]map[string]interface{}{
+		attrs = [3]map[string]any{
 			{"time": "2021-01-01T08:00:00Z"}, // before
 			{"time": "2021-01-01T12:00:00Z"}, // equal
 			{"time": "2021-01-01T16:00:00Z"}, // after

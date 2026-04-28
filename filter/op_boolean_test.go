@@ -2,10 +2,12 @@ package filter_test
 
 import (
 	"fmt"
+	"testing"
+
+	"github.com/scim2/filter-parser/v2"
+
 	internal "github.com/elimity-com/scim/filter"
 	"github.com/elimity-com/scim/schema"
-	"github.com/scim2/filter-parser/v2"
-	"testing"
 )
 
 func TestValidatorBoolean(t *testing.T) {
@@ -20,7 +22,7 @@ func TestValidatorBoolean(t *testing.T) {
 				})),
 			},
 		}
-		attr = map[string]interface{}{
+		attr = map[string]any{
 			"bool": true,
 		}
 	)

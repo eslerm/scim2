@@ -1,9 +1,10 @@
 package filter_test
 
 import (
+	"testing"
+
 	internal "github.com/elimity-com/scim/filter"
 	"github.com/elimity-com/scim/schema"
-	"testing"
 )
 
 // TestValidatorInvalidResourceTypes contains all the cases where an *errors.ScimError gets returned.
@@ -12,14 +13,14 @@ func TestValidatorInvalidResourceTypes(t *testing.T) {
 		name     string
 		filter   string
 		attr     schema.CoreAttribute
-		resource map[string]interface{}
+		resource map[string]any
 	}{
 		{
 			"string", `attr eq "value"`,
 			schema.SimpleCoreAttribute(schema.SimpleStringParams(schema.StringParams{
 				Name: "attr",
 			})),
-			map[string]interface{}{
+			map[string]any{
 				"attr": 1, // expects a string
 			},
 		},
@@ -29,8 +30,8 @@ func TestValidatorInvalidResourceTypes(t *testing.T) {
 				Name:        "attr",
 				MultiValued: true,
 			})),
-			map[string]interface{}{
-				"attr": []interface{}{1}, // expects a []interface{string}
+			map[string]any{
+				"attr": []any{1}, // expects a []interface{string}
 			},
 		},
 		{
@@ -40,7 +41,7 @@ func TestValidatorInvalidResourceTypes(t *testing.T) {
 				Name:        "attr",
 				MultiValued: true,
 			})),
-			map[string]interface{}{
+			map[string]any{
 				"attr": []string{"value"}, // expects a []interface{}
 			},
 		},
@@ -49,7 +50,7 @@ func TestValidatorInvalidResourceTypes(t *testing.T) {
 			schema.SimpleCoreAttribute(schema.SimpleDateTimeParams(schema.DateTimeParams{
 				Name: "attr",
 			})),
-			map[string]interface{}{
+			map[string]any{
 				"attr": 1, // expects a string
 			},
 		},
@@ -58,7 +59,7 @@ func TestValidatorInvalidResourceTypes(t *testing.T) {
 			schema.SimpleCoreAttribute(schema.SimpleDateTimeParams(schema.DateTimeParams{
 				Name: "attr",
 			})),
-			map[string]interface{}{
+			map[string]any{
 				"attr": "2006-01-02T", // expects a valid dateTime
 			},
 		},
@@ -67,7 +68,7 @@ func TestValidatorInvalidResourceTypes(t *testing.T) {
 			schema.SimpleCoreAttribute(schema.SimpleBooleanParams(schema.BooleanParams{
 				Name: "attr",
 			})),
-			map[string]interface{}{
+			map[string]any{
 				"attr": 1, // expects a boolean
 			},
 		},
@@ -77,7 +78,7 @@ func TestValidatorInvalidResourceTypes(t *testing.T) {
 				Name: "attr",
 				Type: schema.AttributeTypeDecimal(),
 			})),
-			map[string]interface{}{
+			map[string]any{
 				"attr": "0", // expects a decimal value
 			},
 		},
@@ -87,7 +88,7 @@ func TestValidatorInvalidResourceTypes(t *testing.T) {
 				Name: "attr",
 				Type: schema.AttributeTypeInteger(),
 			})),
-			map[string]interface{}{
+			map[string]any{
 				"attr": 0.0, // expects an integer
 			},
 		},

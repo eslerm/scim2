@@ -84,7 +84,7 @@ func TestInvalidRequests(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			req := httptest.NewRequest(test.method, test.target, nil)
+			req := httptest.NewRequest(test.method, test.target, http.NoBody)
 			rr := httptest.NewRecorder()
 			newTestServer(t).ServeHTTP(rr, req)
 
@@ -175,7 +175,7 @@ func TestServerExplicitStatusCodes(t *testing.T) {
 }
 
 func TestServerMeEndpoint(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, "/Me", nil)
+	req := httptest.NewRequest(http.MethodGet, "/Me", http.NoBody)
 	rr := httptest.NewRecorder()
 	newTestServer(t).ServeHTTP(rr, req)
 
@@ -183,7 +183,7 @@ func TestServerMeEndpoint(t *testing.T) {
 }
 
 func TestServerResourceDeleteHandler(t *testing.T) {
-	req := httptest.NewRequest(http.MethodDelete, "/Users/0001", nil)
+	req := httptest.NewRequest(http.MethodDelete, "/Users/0001", http.NoBody)
 	rr := httptest.NewRecorder()
 	newTestServer(t).ServeHTTP(rr, req)
 
@@ -191,7 +191,7 @@ func TestServerResourceDeleteHandler(t *testing.T) {
 }
 
 func TestServerResourceDeleteHandlerNotFound(t *testing.T) {
-	req := httptest.NewRequest(http.MethodDelete, "/Users/9999", nil)
+	req := httptest.NewRequest(http.MethodDelete, "/Users/9999", http.NoBody)
 	rr := httptest.NewRecorder()
 	newTestServer(t).ServeHTTP(rr, req)
 
@@ -237,7 +237,7 @@ func TestServerResourceGetHandler(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodGet, tt.target, nil)
+			req := httptest.NewRequest(http.MethodGet, tt.target, http.NoBody)
 			rr := httptest.NewRecorder()
 			newTestServer(t).ServeHTTP(rr, req)
 
@@ -247,13 +247,13 @@ func TestServerResourceGetHandler(t *testing.T) {
 
 			assertEqual(t, tt.expectedVersion, rr.Header().Get("Etag"))
 
-			var resource map[string]interface{}
+			var resource map[string]any
 			assertUnmarshalNoError(t, json.Unmarshal(rr.Body.Bytes(), &resource))
 
 			assertEqual(t, tt.expectedUserName, resource["userName"])
 			assertEqual(t, tt.expectedExternalID, resource["externalId"])
 
-			meta, ok := resource["meta"].(map[string]interface{})
+			meta, ok := resource["meta"].(map[string]any)
 			assertTypeOk(t, ok, "object")
 
 			assertEqual(t, "User", meta["resourceType"])
@@ -266,7 +266,7 @@ func TestServerResourceGetHandler(t *testing.T) {
 }
 
 func TestServerResourceGetHandlerNotFound(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, "/Users/9999", nil)
+	req := httptest.NewRequest(http.MethodGet, "/Users/9999", http.NoBody)
 	rr := httptest.NewRecorder()
 	newTestServer(t).ServeHTTP(rr, req)
 
@@ -282,16 +282,16 @@ func TestServerResourceGetHandlerNotFound(t *testing.T) {
 }
 
 func TestServerResourceGetHandlerWithBaseURL(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, "/Users/0001", nil)
+	req := httptest.NewRequest(http.MethodGet, "/Users/0001", http.NoBody)
 	rr := httptest.NewRecorder()
 	newTestServerWithBaseURL(t).ServeHTTP(rr, req)
 
 	assertEqualStatusCode(t, http.StatusOK, rr.Code)
 
-	var resource map[string]interface{}
+	var resource map[string]any
 	assertUnmarshalNoError(t, json.Unmarshal(rr.Body.Bytes(), &resource))
 
-	meta, ok := resource["meta"].(map[string]interface{})
+	meta, ok := resource["meta"].(map[string]any)
 	assertTypeOk(t, ok, "object")
 
 	assertEqual(t, "https://example.com/v2/Users/0001", meta["location"])
@@ -311,7 +311,7 @@ func TestServerResourcePatchHandlerFailOnBadType(t *testing.T) {
 	rr := httptest.NewRecorder()
 	newTestServer(t).ServeHTTP(rr, req)
 
-	var resource map[string]interface{}
+	var resource map[string]any
 	assertUnmarshalNoError(t, json.Unmarshal(rr.Body.Bytes(), &resource))
 
 	assertEqualStatusCode(t, http.StatusBadRequest, rr.Code)
@@ -486,7 +486,7 @@ func TestServerResourcePatchHandlerValid(t *testing.T) {
 
 	assertEqual(t, expectedVersion, rr.Header().Get("Etag"))
 
-	var resource map[string]interface{}
+	var resource map[string]any
 	assertUnmarshalNoError(t, json.Unmarshal(rr.Body.Bytes(), &resource))
 
 	assertEqualStatusCode(t, http.StatusOK, rr.Code)
@@ -495,11 +495,11 @@ func TestServerResourcePatchHandlerValid(t *testing.T) {
 	assertFalse(t, resource["active"].(bool))
 	assertEqual(t, "external_test_replace", resource["externalId"])
 
-	if resource["emails"] == nil || len(resource["emails"].([]interface{})) < 1 {
+	if resource["emails"] == nil || len(resource["emails"].([]any)) < 1 {
 		t.Errorf("handler did not add user's email address")
 	}
 
-	meta, ok := resource["meta"].(map[string]interface{})
+	meta, ok := resource["meta"].(map[string]any)
 	assertTrue(t, ok)
 
 	assertEqual(t, "User", meta["resourceType"])
@@ -563,10 +563,10 @@ func TestServerResourcePatchHandlerWithBaseURL(t *testing.T) {
 
 	assertEqualStatusCode(t, http.StatusOK, rr.Code)
 
-	var resource map[string]interface{}
+	var resource map[string]any
 	assertUnmarshalNoError(t, json.Unmarshal(rr.Body.Bytes(), &resource))
 
-	meta, ok := resource["meta"].(map[string]interface{})
+	meta, ok := resource["meta"].(map[string]any)
 	assertTypeOk(t, ok, "object")
 
 	assertEqual(t, "https://example.com/v2/Users/0001", meta["location"])
@@ -586,7 +586,7 @@ func TestServerResourcePostHandlerValid(t *testing.T) {
 		target             string
 		body               string
 		expectedUserName   string
-		expectedExternalID interface{}
+		expectedExternalID any
 	}{
 		{
 			name:               "Users post request without version",
@@ -625,14 +625,14 @@ func TestServerResourcePostHandlerValid(t *testing.T) {
 
 			assertEqual(t, "application/scim+json", rr.Header().Get("Content-Type"))
 
-			var resource map[string]interface{}
+			var resource map[string]any
 			assertUnmarshalNoError(t, json.Unmarshal(rr.Body.Bytes(), &resource))
 
 			assertEqual(t, test.expectedUserName, resource["userName"])
 
 			assertEqual(t, test.expectedExternalID, resource["externalId"])
 
-			meta, ok := resource["meta"].(map[string]interface{})
+			meta, ok := resource["meta"].(map[string]any)
 			assertTypeOk(t, ok, "object")
 
 			assertEqual(t, "User", meta["resourceType"])
@@ -656,10 +656,10 @@ func TestServerResourcePostHandlerWithBaseURL(t *testing.T) {
 
 	assertEqualStatusCode(t, http.StatusCreated, rr.Code)
 
-	var resource map[string]interface{}
+	var resource map[string]any
 	assertUnmarshalNoError(t, json.Unmarshal(rr.Body.Bytes(), &resource))
 
-	meta, ok := resource["meta"].(map[string]interface{})
+	meta, ok := resource["meta"].(map[string]any)
 	assertTypeOk(t, ok, "object")
 
 	location, ok := meta["location"].(string)
@@ -721,7 +721,7 @@ func TestServerResourcePutHandlerValid(t *testing.T) {
 		target             string
 		body               string
 		expectedUserName   string
-		expectedExternalID interface{}
+		expectedExternalID any
 	}{
 		{
 			name:               "Users put request",
@@ -754,13 +754,13 @@ func TestServerResourcePutHandlerValid(t *testing.T) {
 
 			assertEqual(t, "application/scim+json", rr.Header().Get("Content-Type"))
 
-			var resource map[string]interface{}
+			var resource map[string]any
 			assertUnmarshalNoError(t, json.Unmarshal(rr.Body.Bytes(), &resource))
 
 			assertEqual(t, test.expectedUserName, resource["userName"])
 			assertEqual(t, test.expectedExternalID, resource["externalId"])
 
-			meta, ok := resource["meta"].(map[string]interface{})
+			meta, ok := resource["meta"].(map[string]any)
 			assertTypeOk(t, ok, "meta")
 			assertEqual(t, "User", meta["resourceType"])
 		})
@@ -775,10 +775,10 @@ func TestServerResourcePutHandlerWithBaseURL(t *testing.T) {
 
 	assertEqualStatusCode(t, http.StatusOK, rr.Code)
 
-	var resource map[string]interface{}
+	var resource map[string]any
 	assertUnmarshalNoError(t, json.Unmarshal(rr.Body.Bytes(), &resource))
 
-	meta, ok := resource["meta"].(map[string]interface{})
+	meta, ok := resource["meta"].(map[string]any)
 	assertTypeOk(t, ok, "object")
 
 	assertEqual(t, "https://example.com/v2/Users/0001", meta["location"])
@@ -809,7 +809,7 @@ func TestServerResourceSearch(t *testing.T) {
 	assertEqual(t, 1, response.TotalResults)
 	assertEqual(t, 1, len(response.Resources))
 
-	resource := response.Resources[0].(map[string]interface{})
+	resource := response.Resources[0].(map[string]any)
 	assertEqual(t, `userName eq "test01"`, resource["capturedFilter"])
 	assertTrue(t, resource["capturedFilterValid"].(bool))
 	assertEqual(t, float64(10), resource["capturedCount"])
@@ -817,12 +817,12 @@ func TestServerResourceSearch(t *testing.T) {
 	assertEqual(t, "userName", resource["capturedSortBy"])
 	assertEqual(t, "ascending", resource["capturedSortOrder"])
 
-	attrs := resource["capturedAttributes"].([]interface{})
+	attrs := resource["capturedAttributes"].([]any)
 	assertLen(t, attrs, 2)
 	assertEqual(t, "userName", attrs[0])
 	assertEqual(t, "emails", attrs[1])
 
-	excluded := resource["capturedExcludedAttributes"].([]interface{})
+	excluded := resource["capturedExcludedAttributes"].([]any)
 	assertLen(t, excluded, 1)
 	assertEqual(t, "displayName", excluded[0])
 }
@@ -933,7 +933,7 @@ func TestServerResourceSearchWrongMethod(t *testing.T) {
 
 	for _, method := range []string{http.MethodGet, http.MethodPut, http.MethodPatch, http.MethodDelete} {
 		t.Run(method, func(t *testing.T) {
-			req := httptest.NewRequest(method, "/Users/.search", nil)
+			req := httptest.NewRequest(method, "/Users/.search", http.NoBody)
 			rr := httptest.NewRecorder()
 			s.ServeHTTP(rr, req)
 
@@ -967,13 +967,13 @@ func TestServerResourceTypeHandlerValid(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("%s/ResourceTypes/%s", tt.versionPrefix, tt.resourceType), nil)
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("%s/ResourceTypes/%s", tt.versionPrefix, tt.resourceType), http.NoBody)
 			rr := httptest.NewRecorder()
 			newTestServer(t).ServeHTTP(rr, req)
 
 			assertEqualStatusCode(t, http.StatusOK, rr.Code)
 
-			var resourceType map[string]interface{}
+			var resourceType map[string]any
 			assertUnmarshalNoError(t, json.Unmarshal(rr.Body.Bytes(), &resourceType))
 
 			assertEqual(t, tt.resourceType, resourceType["id"])
@@ -997,7 +997,7 @@ func TestServerResourceTypesHandler(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodGet, test.target, nil)
+			req := httptest.NewRequest(http.MethodGet, test.target, http.NoBody)
 			rr := httptest.NewRecorder()
 			newTestServer(t).ServeHTTP(rr, req)
 
@@ -1011,7 +1011,7 @@ func TestServerResourceTypesHandler(t *testing.T) {
 
 			resourceTypes := make([]string, 3)
 			for i, resource := range response.Resources {
-				resourceType, ok := resource.(map[string]interface{})
+				resourceType, ok := resource.(map[string]any)
 				assertTypeOk(t, ok, "object")
 				resourceTypes[i] = resourceType["name"].(string)
 			}
@@ -1022,7 +1022,7 @@ func TestServerResourceTypesHandler(t *testing.T) {
 }
 
 func TestServerResourcesGetAllHandlerNegativeCount(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, "/Users?count=-1", nil)
+	req := httptest.NewRequest(http.MethodGet, "/Users?count=-1", http.NoBody)
 	rr := httptest.NewRecorder()
 	newTestServer(t).ServeHTTP(rr, req)
 
@@ -1035,7 +1035,7 @@ func TestServerResourcesGetAllHandlerNegativeCount(t *testing.T) {
 }
 
 func TestServerResourcesGetAllHandlerNonIntCount(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, "/Users?count=BadBanana", nil)
+	req := httptest.NewRequest(http.MethodGet, "/Users?count=BadBanana", http.NoBody)
 	rr := httptest.NewRecorder()
 	newTestServer(t).ServeHTTP(rr, req)
 
@@ -1048,7 +1048,7 @@ func TestServerResourcesGetAllHandlerNonIntCount(t *testing.T) {
 }
 
 func TestServerResourcesGetAllHandlerNonIntStartIndex(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, "/Users?startIndex=BadBanana", nil)
+	req := httptest.NewRequest(http.MethodGet, "/Users?startIndex=BadBanana", http.NoBody)
 	rr := httptest.NewRecorder()
 	newTestServer(t).ServeHTTP(rr, req)
 
@@ -1061,7 +1061,7 @@ func TestServerResourcesGetAllHandlerNonIntStartIndex(t *testing.T) {
 }
 
 func TestServerResourcesGetHandler(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, "/Users", nil)
+	req := httptest.NewRequest(http.MethodGet, "/Users", http.NoBody)
 	rr := httptest.NewRecorder()
 	newTestServer(t).ServeHTTP(rr, req)
 
@@ -1086,7 +1086,7 @@ func TestServerResourcesGetHandlerFilterOnCommonAttribute(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			target := fmt.Sprintf("/Users?filter=%s", url.QueryEscape(tt.filter))
-			req := httptest.NewRequest(http.MethodGet, target, nil)
+			req := httptest.NewRequest(http.MethodGet, target, http.NoBody)
 			rr := httptest.NewRecorder()
 			newTestServer(t).ServeHTTP(rr, req)
 
@@ -1096,7 +1096,7 @@ func TestServerResourcesGetHandlerFilterOnCommonAttribute(t *testing.T) {
 }
 
 func TestServerResourcesGetHandlerMaxCount(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, "/Users?count=20000", nil)
+	req := httptest.NewRequest(http.MethodGet, "/Users?count=20000", http.NoBody)
 	rr := httptest.NewRecorder()
 	newTestServer(t).ServeHTTP(rr, req)
 
@@ -1108,7 +1108,7 @@ func TestServerResourcesGetHandlerMaxCount(t *testing.T) {
 }
 
 func TestServerResourcesGetHandlerPagination(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, "/Users?count=2&startIndex=2", nil)
+	req := httptest.NewRequest(http.MethodGet, "/Users?count=2&startIndex=2", http.NoBody)
 	rr := httptest.NewRecorder()
 	newTestServer(t).ServeHTTP(rr, req)
 
@@ -1120,19 +1120,19 @@ func TestServerResourcesGetHandlerPagination(t *testing.T) {
 }
 
 func TestServerResourcesGetHandlerWithBaseURL(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, "/Users?count=2&startIndex=1", nil)
+	req := httptest.NewRequest(http.MethodGet, "/Users?count=2&startIndex=1", http.NoBody)
 	rr := httptest.NewRecorder()
 	newTestServerWithBaseURL(t).ServeHTTP(rr, req)
 
 	assertEqualStatusCode(t, http.StatusOK, rr.Code)
 
 	var response struct {
-		Resources []map[string]interface{}
+		Resources []map[string]any
 	}
 	assertUnmarshalNoError(t, json.Unmarshal(rr.Body.Bytes(), &response))
 
 	for _, resource := range response.Resources {
-		meta, ok := resource["meta"].(map[string]interface{})
+		meta, ok := resource["meta"].(map[string]any)
 		assertTypeOk(t, ok, "object")
 
 		location, ok := meta["location"].(string)
@@ -1145,7 +1145,7 @@ func TestServerResourcesGetHandlerWithBaseURL(t *testing.T) {
 func TestServerRootQuery(t *testing.T) {
 	s := newTestServerWithRootQueryHandler(t)
 
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
 	rr := httptest.NewRecorder()
 	s.ServeHTTP(rr, req)
 
@@ -1160,7 +1160,7 @@ func TestServerRootQuery(t *testing.T) {
 func TestServerRootQueryExplicitStatusCode(t *testing.T) {
 	s := newTestServerWithRootQueryHandler(t)
 
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
 	rr := httptest.NewRecorder()
 	w := &statusRecordingResponseWriter{ResponseWriter: rr}
 	s.ServeHTTP(w, req)
@@ -1183,7 +1183,7 @@ func TestServerRootQueryFilter(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	req := httptest.NewRequest(http.MethodGet, `/?filter=meta.resourceType+eq+"User"`, nil)
+	req := httptest.NewRequest(http.MethodGet, `/?filter=meta.resourceType+eq+"User"`, http.NoBody)
 	rr := httptest.NewRecorder()
 	s.ServeHTTP(rr, req)
 
@@ -1194,7 +1194,7 @@ func TestServerRootQueryFilter(t *testing.T) {
 	assertEqual(t, 1, response.TotalResults)
 	assertEqual(t, 1, len(response.Resources))
 
-	resource := response.Resources[0].(map[string]interface{})
+	resource := response.Resources[0].(map[string]any)
 	assertEqual(t, `meta.resourceType eq "User"`, resource["capturedFilter"])
 }
 
@@ -1210,7 +1210,7 @@ func TestServerRootQueryHandlerError(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
 	rr := httptest.NewRecorder()
 	s.ServeHTTP(rr, req)
 
@@ -1220,7 +1220,7 @@ func TestServerRootQueryHandlerError(t *testing.T) {
 func TestServerRootQueryInjectsResourceFields(t *testing.T) {
 	s := newTestServerWithRootQueryHandler(t)
 
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
 	rr := httptest.NewRecorder()
 	s.ServeHTTP(rr, req)
 
@@ -1230,26 +1230,26 @@ func TestServerRootQueryInjectsResourceFields(t *testing.T) {
 	assertUnmarshalNoError(t, json.Unmarshal(rr.Body.Bytes(), &response))
 
 	// First resource has ID and ExternalID set on the Resource struct.
-	first := response.Resources[0].(map[string]interface{})
+	first := response.Resources[0].(map[string]any)
 	assertEqual(t, "u1", first["id"])
 	assertEqual(t, "ext-u1", first["externalId"])
 
 	// Second resource has ID but no ExternalID.
-	second := response.Resources[1].(map[string]interface{})
+	second := response.Resources[1].(map[string]any)
 	assertEqual(t, "u2", second["id"])
 	if _, ok := second["externalId"]; ok {
 		t.Error("externalId should not be present when not set on Resource")
 	}
 
 	// The caller-provided "meta" map (with "resourceType") is preserved.
-	firstMeta := first["meta"].(map[string]interface{})
+	firstMeta := first["meta"].(map[string]any)
 	assertEqual(t, "User", firstMeta["resourceType"])
 }
 
 func TestServerRootQueryInvalidCount(t *testing.T) {
 	s := newTestServerWithRootQueryHandler(t)
 
-	req := httptest.NewRequest(http.MethodGet, "/?count=BadBanana", nil)
+	req := httptest.NewRequest(http.MethodGet, "/?count=BadBanana", http.NoBody)
 	rr := httptest.NewRecorder()
 	s.ServeHTTP(rr, req)
 
@@ -1275,7 +1275,7 @@ func TestServerRootQueryMergesMetaFields(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
 	rr := httptest.NewRecorder()
 	s.ServeHTTP(rr, req)
 
@@ -1284,11 +1284,11 @@ func TestServerRootQueryMergesMetaFields(t *testing.T) {
 	var response listResponse
 	assertUnmarshalNoError(t, json.Unmarshal(rr.Body.Bytes(), &response))
 
-	resource := response.Resources[0].(map[string]interface{})
+	resource := response.Resources[0].(map[string]any)
 	assertEqual(t, "r1", resource["id"])
 
 	// Meta fields from Resource.Meta are merged with the caller-provided "meta" map.
-	m := resource["meta"].(map[string]interface{})
+	m := resource["meta"].(map[string]any)
 	assertEqual(t, "User", m["resourceType"])
 	assertEqual(t, created.Format(time.RFC3339), m["created"])
 	assertEqual(t, modified.Format(time.RFC3339), m["lastModified"])
@@ -1300,7 +1300,7 @@ func TestServerRootQueryNonGetMethod(t *testing.T) {
 
 	for _, method := range []string{http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete} {
 		t.Run(method, func(t *testing.T) {
-			req := httptest.NewRequest(method, "/", nil)
+			req := httptest.NewRequest(method, "/", http.NoBody)
 			rr := httptest.NewRecorder()
 			s.ServeHTTP(rr, req)
 
@@ -1310,7 +1310,7 @@ func TestServerRootQueryNonGetMethod(t *testing.T) {
 }
 
 func TestServerRootQueryNotConfigured(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
 	rr := httptest.NewRecorder()
 	newTestServer(t).ServeHTTP(rr, req)
 
@@ -1322,7 +1322,7 @@ func TestServerRootQueryNotConfigured(t *testing.T) {
 }
 
 func TestServerRootQueryNotConfiguredWithV2Prefix(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, "/v2", nil)
+	req := httptest.NewRequest(http.MethodGet, "/v2", http.NoBody)
 	rr := httptest.NewRecorder()
 	newTestServer(t).ServeHTTP(rr, req)
 
@@ -1334,7 +1334,7 @@ func TestServerRootQueryNotConfiguredWithV2Prefix(t *testing.T) {
 }
 
 func TestServerRootQueryNotConfiguredWithV2PrefixTrailingSlash(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, "/v2/", nil)
+	req := httptest.NewRequest(http.MethodGet, "/v2/", http.NoBody)
 	rr := httptest.NewRecorder()
 	newTestServer(t).ServeHTTP(rr, req)
 
@@ -1348,7 +1348,7 @@ func TestServerRootQueryNotConfiguredWithV2PrefixTrailingSlash(t *testing.T) {
 func TestServerRootQueryPagination(t *testing.T) {
 	s := newTestServerWithRootQueryHandler(t)
 
-	req := httptest.NewRequest(http.MethodGet, "/?count=1&startIndex=2", nil)
+	req := httptest.NewRequest(http.MethodGet, "/?count=1&startIndex=2", http.NoBody)
 	rr := httptest.NewRecorder()
 	s.ServeHTTP(rr, req)
 
@@ -1365,7 +1365,7 @@ func TestServerRootQueryPagination(t *testing.T) {
 func TestServerRootQueryWithV2Prefix(t *testing.T) {
 	s := newTestServerWithRootQueryHandler(t)
 
-	req := httptest.NewRequest(http.MethodGet, "/v2", nil)
+	req := httptest.NewRequest(http.MethodGet, "/v2", http.NoBody)
 	rr := httptest.NewRecorder()
 	s.ServeHTTP(rr, req)
 
@@ -1379,7 +1379,7 @@ func TestServerRootQueryWithV2Prefix(t *testing.T) {
 func TestServerRootQueryWithV2PrefixTrailingSlash(t *testing.T) {
 	s := newTestServerWithRootQueryHandler(t)
 
-	req := httptest.NewRequest(http.MethodGet, "/v2/", nil)
+	req := httptest.NewRequest(http.MethodGet, "/v2/", http.NoBody)
 	rr := httptest.NewRecorder()
 	s.ServeHTTP(rr, req)
 
@@ -1485,7 +1485,7 @@ func TestServerRootSearchFilter(t *testing.T) {
 	assertUnmarshalNoError(t, json.Unmarshal(rr.Body.Bytes(), &response))
 	assertEqual(t, 1, response.TotalResults)
 
-	resource := response.Resources[0].(map[string]interface{})
+	resource := response.Resources[0].(map[string]any)
 	assertEqual(t, `meta.resourceType eq "User"`, resource["capturedFilter"])
 }
 
@@ -1597,7 +1597,7 @@ func TestServerRootSearchWrongMethod(t *testing.T) {
 
 	for _, method := range []string{http.MethodGet, http.MethodPut, http.MethodPatch, http.MethodDelete} {
 		t.Run(method, func(t *testing.T) {
-			req := httptest.NewRequest(method, "/.search", nil)
+			req := httptest.NewRequest(method, "/.search", http.NoBody)
 			rr := httptest.NewRecorder()
 			s.ServeHTTP(rr, req)
 
@@ -1633,13 +1633,13 @@ func TestServerSchemaEndpointValid(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf(
 				"%s/Schemas/%s", test.versionPrefix, test.schema,
-			), nil)
+			), http.NoBody)
 			rr := httptest.NewRecorder()
 			newTestServer(t).ServeHTTP(rr, req)
 
 			assertEqualStatusCode(t, http.StatusOK, rr.Code)
 
-			var s map[string]interface{}
+			var s map[string]any
 			assertUnmarshalNoError(t, json.Unmarshal(rr.Body.Bytes(), &s))
 			assertEqual(t, test.schema, s["id"].(string))
 		})
@@ -1662,7 +1662,7 @@ func TestServerSchemasEndpoint(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodGet, test.target, nil)
+			req := httptest.NewRequest(http.MethodGet, test.target, http.NoBody)
 			rr := httptest.NewRecorder()
 			newTestServer(t).ServeHTTP(rr, req)
 
@@ -1677,7 +1677,7 @@ func TestServerSchemasEndpoint(t *testing.T) {
 
 			resourceIDs := make([]string, 6)
 			for i, resource := range response.Resources {
-				resourceType, ok := resource.(map[string]interface{})
+				resourceType, ok := resource.(map[string]any)
 				assertTypeOk(t, ok, "object")
 				resourceIDs[i] = resourceType["id"].(string)
 			}
@@ -1701,7 +1701,7 @@ func TestServerSchemasEndpointFilter(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf(
 		"/Schemas?%s", params.Encode(),
-	), nil)
+	), http.NoBody)
 	rr := httptest.NewRecorder()
 	newTestServer(t).ServeHTTP(rr, req)
 
@@ -1729,7 +1729,7 @@ func TestServerServiceProviderConfigHandler(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodGet, tt.target, nil)
+			req := httptest.NewRequest(http.MethodGet, tt.target, http.NoBody)
 			rr := httptest.NewRecorder()
 			newTestServer(t).ServeHTTP(rr, req)
 
@@ -1982,19 +1982,13 @@ type testRootQueryHandler struct{}
 
 func (h testRootQueryHandler) GetAll(r *http.Request, params ListRequestParams) (Page, error) {
 	resources := []Resource{
-		{ID: "u1", ExternalID: optional.NewString("ext-u1"), Attributes: ResourceAttributes{"userName": "alice", "meta": map[string]interface{}{"resourceType": "User"}}},
-		{ID: "u2", Attributes: ResourceAttributes{"userName": "bob", "meta": map[string]interface{}{"resourceType": "User"}}},
-		{ID: "g1", Attributes: ResourceAttributes{"displayName": "admins", "meta": map[string]interface{}{"resourceType": "Group"}}},
+		{ID: "u1", ExternalID: optional.NewString("ext-u1"), Attributes: ResourceAttributes{"userName": "alice", "meta": map[string]any{"resourceType": "User"}}},
+		{ID: "u2", Attributes: ResourceAttributes{"userName": "bob", "meta": map[string]any{"resourceType": "User"}}},
+		{ID: "g1", Attributes: ResourceAttributes{"displayName": "admins", "meta": map[string]any{"resourceType": "Group"}}},
 	}
 
-	start := params.StartIndex - 1
-	if start > len(resources) {
-		start = len(resources)
-	}
-	end := start + params.Count
-	if end > len(resources) {
-		end = len(resources)
-	}
+	start := min(params.StartIndex-1, len(resources))
+	end := min(start+params.Count, len(resources))
 
 	return Page{
 		TotalResults: len(resources),
@@ -2045,7 +2039,7 @@ func (h testRootQueryHandlerWithMeta) GetAll(r *http.Request, params ListRequest
 			{
 				ID:         "r1",
 				Meta:       Meta{Created: h.created, LastModified: h.modified, Version: h.version},
-				Attributes: ResourceAttributes{"meta": map[string]interface{}{"resourceType": "User"}},
+				Attributes: ResourceAttributes{"meta": map[string]any{"resourceType": "User"}},
 			},
 		},
 	}, nil
@@ -2056,11 +2050,11 @@ type testSearchHandler struct {
 }
 
 func (h testSearchHandler) Search(r *http.Request, params SearchParams) (Page, error) {
-	attrs := make([]interface{}, len(params.Attributes))
+	attrs := make([]any, len(params.Attributes))
 	for i, a := range params.Attributes {
 		attrs[i] = a
 	}
-	excluded := make([]interface{}, len(params.ExcludedAttributes))
+	excluded := make([]any, len(params.ExcludedAttributes))
 	for i, a := range params.ExcludedAttributes {
 		excluded[i] = a
 	}

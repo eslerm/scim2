@@ -1,12 +1,13 @@
 package scim
 
 import (
-	"github.com/elimity-com/scim/errors"
 	"reflect"
 	"testing"
+
+	"github.com/elimity-com/scim/errors"
 )
 
-func assertEqual(t *testing.T, expected, actual interface{}) {
+func assertEqual(t *testing.T, expected, actual any) {
 	if expected != actual {
 		t.Errorf("not equal: expected %v, actual %v", expected, actual)
 	}
@@ -41,7 +42,7 @@ func assertFalse(t *testing.T, ok bool) {
 	}
 }
 
-func assertLen(t *testing.T, object interface{}, length int) {
+func assertLen(t *testing.T, object any, length int) {
 	ok, l := getLen(object)
 	if !ok {
 		t.Errorf("given object is not a slice/array")
@@ -51,19 +52,19 @@ func assertLen(t *testing.T, object interface{}, length int) {
 	}
 }
 
-func assertNil(t *testing.T, object interface{}, name string) {
+func assertNil(t *testing.T, object any, name string) {
 	if object != nil {
 		t.Errorf("object should be nil: %s", name)
 	}
 }
 
-func assertNotEqual(t *testing.T, expected, actual interface{}) {
+func assertNotEqual(t *testing.T, expected, actual any) {
 	if expected == actual {
 		t.Errorf("%v and %v should not be equal", expected, actual)
 	}
 }
 
-func assertNotNil(t *testing.T, object interface{}, name string) {
+func assertNotNil(t *testing.T, object any, name string) {
 	if object == nil {
 		t.Errorf("missing object: %s", name)
 	}
@@ -87,7 +88,7 @@ func assertUnmarshalNoError(t *testing.T, err error) {
 	}
 }
 
-func getLen(x interface{}) (ok bool, length int) {
+func getLen(x any) (ok bool, length int) {
 	v := reflect.ValueOf(x)
 	defer func() {
 		if e := recover(); e != nil {
