@@ -1,0 +1,140 @@
+# golangci-lint configuration
+# Documentation: https://golangci-lint.run/usage/configuration/
+
+version: "2"
+
+run:
+  timeout: 5m
+  issues-exit-code: 1
+  tests: true
+
+linters:
+  default: none
+
+  enable:
+    # Core linters (high value, low false positives)
+    - staticcheck    # Most important static analysis tool
+    - gosec          # Security vulnerabilities
+    - gocritic       # Performance and style checks
+    - errorlint      # Error handling best practices
+
+    # Code quality
+    - misspell       # Spelling mistakes in comments
+    - unparam        # Detect unused function parameters
+    - unconvert      # Unnecessary type conversions
+    - whitespace     # Whitespace issues
+    - prealloc       # Slice preallocation
+
+    # HTTP and resource handling
+    - bodyclose      # HTTP response body must be closed
+
+    # Testing
+    - tparallel      # Detects inappropriate usage of t.Parallel()
+
+    # Modernization
+    - modernize      # Suggests modern Go features
+
+    # Additional checks
+    - asciicheck     # Non-ASCII identifiers
+    - bidichk        # Dangerous unicode characters
+    - durationcheck  # Duration multiplication
+    - errname        # Error naming conventions
+    - nilerr         # Return nil even if err != nil
+
+    # Forbidden patterns
+    - forbidigo      # Forbid specific function calls
+
+    # Enum completeness
+    - exhaustive     # Check exhaustiveness of enum switch statements
+
+  settings:
+    gosec:
+      excludes:
+        - G115  # Integer overflow - handled manually when needed
+
+    forbidigo:
+      forbid:
+        - pattern: ^fmt\.Print.*$
+          msg: "Use structured logging (clog) instead of fmt.Print"
+        - pattern: ^print$
+          msg: "Use structured logging (clog) instead of print"
+        - pattern: ^println$
+          msg: "Use structured logging (clog) instead of println"
+      analyze-types: false
+
+    staticcheck:
+      checks: ["all"]
+
+    gocritic:
+      enabled-tags:
+        - diagnostic
+        - style
+        - performance
+        - experimental
+        - opinionated
+      disabled-checks:
+        - hugeParam        # Sometimes large structs are intentionally passed
+        - rangeValCopy     # Sometimes acceptable
+        - unnamedResult    # Named results not always needed
+        - appendAssign     # make+copy+append pattern is intentional defensive copy
+
+    exhaustive:
+      default-signifies-exhaustive: true
+
+    misspell:
+      locale: US
+
+    errorlint:
+      errorf: true
+      asserts: true
+      comparison: true
+
+  exclusions:
+    paths:
+      - "examples/.*"
+
+    rules:
+      # ScimErrorXxx sentinel names are the established public API; renaming breaks users
+      - path: "errors/.*\\.go"
+        linters:
+          - errname
+
+      # Test and example files: relax security checks
+      - path: "_test\\.go"
+        linters:
+          - gosec
+
+      # Package comments: suppress for internal/test packages; public packages have them
+      - path: "internal/.*\\.go"
+        linters:
+          - staticcheck
+        text: "ST1000"
+      - path: "_test\\.go"
+        linters:
+          - staticcheck
+        text: "ST1000"
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+    - gci
+
+  settings:
+    gci:
+      sections:
+        - standard
+        - default
+        - prefix(github.com/elimity-com/scim)
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+output:
+  formats:
+    text:
+      path: stdout
+      print-linter-name: true
+      print-issued-lines: true
+      colors: true
